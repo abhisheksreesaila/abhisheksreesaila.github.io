@@ -1,1 +1,641 @@
-<h1> system design </h1> 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Password Security Explanation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Light gray background */
+        }
+        .step-container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem; /* Rounded corners */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+        }
+        .step-hidden {
+            opacity: 0;
+            transform: translateY(20px);
+            display: none; /* Initially hide subsequent steps */
+        }
+        .step-visible {
+            opacity: 1;
+            transform: translateY(0);
+            display: block;
+        }
+        .code-block {
+            background-color: #1f2937; /* Dark gray for code blocks */
+            color: #d1d5db; /* Light gray text */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .arrow {
+            font-size: 2rem;
+            color: #6b7280; /* Medium gray */
+            margin: 0 1rem;
+        }
+        .icon {
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+        }
+        .db-table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 1rem;
+            border-radius: 0.5rem;
+            overflow: hidden; /* Ensures border-radius applies to table */
+        }
+        .db-table th, .db-table td {
+            border: 1px solid #e5e7eb; /* Light gray border */
+            padding: 0.75rem;
+            text-align: left;
+        }
+        .db-table th {
+            background-color: #f9fafb; /* Very light gray for header */
+            color: #374151; /* Darker gray text */
+        }
+        .highlight {
+            color: #3b82f6; /* Blue for highlighting */
+            font-weight: bold;
+        }
+        .warning {
+            color: #ef4444; /* Red for warnings */
+            font-weight: bold;
+        }
+        .success {
+            color: #10b981; /* Green for success */
+            font-weight: bold;
+        }
+        .salt-value {
+            background-color: #fef3c7; /* Light yellow for salt */
+            color: #713f12; /* Brown text */
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .password-input {
+            border: 1px solid #d1d5db;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            width: 100%;
+            max-width: 300px;
+        }
+        .action-button {
+            background-color: #3b82f6; /* Blue */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            cursor: pointer;
+            text-align: center;
+        }
+        .action-button:hover {
+            background-color: #2563eb; /* Darker blue */
+        }
+        .action-button:disabled {
+            background-color: #9ca3af; /* Gray when disabled */
+            cursor: not-allowed;
+        }
+        .nav-button {
+            background-color: #10b981; /* Green */
+        }
+        .nav-button:hover {
+            background-color: #059669; /* Darker green */
+        }
+        .back-button {
+            background-color: #6b7280; /* Medium Gray */
+        }
+        .back-button:hover {
+            background-color: #4b5563; /* Darker Gray */
+        }
+        .explanation-box {
+            background-color: #eef2ff; /* Light indigo background */
+            border-left: 4px solid #6366f1; /* Indigo border */
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 0.375rem;
+            color: #4338ca; /* Indigo text */
+        }
+        .button-container {
+            display: flex;
+            flex-direction: column; /* Stack buttons vertically on small screens */
+            gap: 0.75rem; /* Space between buttons */
+            margin-top: 1.5rem; /* mt-6 */
+        }
+        @media (min-width: 640px) { /* sm breakpoint */
+            .button-container {
+                flex-direction: row; /* Buttons side-by-side on larger screens */
+                justify-content: space-between; /* Space out back and next buttons */
+            }
+            .button-container .action-button {
+                 width: auto; /* Allow buttons to size based on content */
+            }
+            .button-container .action-button.w-full-mobile {
+                 width: 100%; /* Keep full width on mobile if specified */
+            }
+             @media (min-width: 640px) {
+                .button-container .action-button.w-full-mobile {
+                    width: auto;
+                }
+            }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <header class="text-center mb-12">
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Interactive Password Security Explained</h1>
+        <p class="text-lg text-gray-600 mt-2">Follow the steps to understand how password hashing and salting work.</p>
+    </header>
+
+    <main class="max-w-3xl mx-auto">
+        <div id="step1" class="step-container step-visible">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+                <i class="fas fa-key icon text-blue-500"></i>Step 1 & 2: Hashing & Storing Fingerprints
+            </h2>
+            <p class="text-gray-600 mb-2">Enter a password to see how it's transformed into a "fingerprint" (hash) for storage.</p>
+            <div class="flex flex-col sm:flex-row items-center gap-4 mb-4">
+                <input type="text" id="passwordInput1" class="password-input" placeholder="Enter your password">
+                <button id="hashButton" class="action-button w-full sm:w-auto">
+                    <i class="fas fa-cogs"></i> Hash & Store
+                </button>
+            </div>
+            
+            <div id="step1Output" class="hidden">
+                <div class="flex flex-col items-center md:flex-row md:items-start justify-around gap-4 my-4">
+                    <div class="text-center">
+                        <p class="font-medium text-gray-700">Your Password:</p>
+                        <div class="code-block" id="originalPassword1"></div>
+                    </div>
+                    <div class="arrow hidden md:block self-center"><i class="fas fa-arrow-right"></i></div>
+                    <div class="arrow md:hidden self-center"><i class="fas fa-arrow-down"></i></div>
+                    <div class="text-center">
+                        <p class="font-medium text-gray-700">Generated Fingerprint (Hash):</p>
+                        <div class="code-block" id="hashedPassword1"></div>
+                    </div>
+                </div>
+                <div class="explanation-box">
+                    <p><i class="fas fa-check-circle text-green-500"></i> The server transforms the password using a hash function to create the fingerprint.</p>
+                    <p><i class="fas fa-database text-blue-500"></i> The database stores <span class="highlight">only the fingerprint</span> and not the original password.</p>
+                </div>
+                <div class="mt-4">
+                    <p class="font-medium text-gray-700 mb-2">Simulated Database:</p>
+                    <table class="db-table">
+                        <thead><tr><th>Username</th><th>Password Fingerprint</th></tr></thead>
+                        <tbody id="dbTable1">
+                            <tr><td>user123</td><td id="dbFingerprint1">---</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="button-container">
+                    <div class="flex-grow"></div> <button onclick="showStep('step2Nav')" class="action-button nav-button w-full-mobile">
+                        Next: One-Way Hashing <i class="fas fa-angle-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="step2Nav" class="step-container step-hidden">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+                <i class="fas fa-lock icon text-yellow-500"></i>Step 3: The One-Way Hash Function
+            </h2>
+            <p class="text-gray-600 mb-2">Hash functions are designed to be one-way. This means it's computationally infeasible to reverse the process and get the original password from its fingerprint.</p>
+            
+            <div class="flex flex-col items-center md:flex-row md:items-start justify-around gap-4 my-4">
+                <div class="text-center">
+                    <p class="font-medium text-gray-700">Generated Fingerprint:</p>
+                    <div class="code-block" id="hashedPassword2"></div>
+                </div>
+                <div class="arrow hidden md:block self-center"><i class="fas fa-times-circle text-red-500"></i></div>
+                 <div class="arrow md:hidden self-center"><i class="fas fa-arrow-down"></i> <i class="fas fa-times-circle text-red-500 ml-1"></i></div>
+                <div class="text-center">
+                    <p class="font-medium text-gray-700">Original Password:</p>
+                    <div class="code-block bg-red-100 text-red-700">Cannot be retrieved!</div>
+                </div>
+            </div>
+            <div class="explanation-box">
+                <p><i class="fas fa-shield-alt text-green-500"></i> The one-way hash function prevents retrieval of the password from a fingerprint. This is a key security feature.</p>
+            </div>
+            <div class="button-container">
+                <button onclick="showStep('step1')" class="action-button back-button w-full-mobile">
+                    <i class="fas fa-angle-left mr-2"></i> Back: Hashing & Storing
+                </button>
+                <button onclick="showStep('step3Nav')" class="action-button nav-button w-full-mobile">
+                    Next: Login Process <i class="fas fa-angle-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="step3Nav" class="step-container step-hidden">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+                <i class="fas fa-sign-in-alt icon text-green-500"></i>Step 4 & 5: Login & Verification
+            </h2>
+            <p class="text-gray-600 mb-2">When you try to log in, the system re-hashes the password you enter and compares it to the stored fingerprint.</p>
+            <p class="text-gray-600 mb-4">Try logging in with the password you set in Step 1 (or a different one to see it fail).</p>
+
+            <div class="flex flex-col sm:flex-row items-center gap-4 mb-4">
+                <input type="text" id="loginPasswordInput" class="password-input" placeholder="Enter password to login">
+                <button id="loginButton" class="action-button w-full sm:w-auto">
+                    <i class="fas fa-check"></i> Attempt Login
+                </button>
+            </div>
+
+            <div id="loginAttemptOutput" class="hidden">
+                <p class="font-medium text-gray-700">Password Entered for Login:</p>
+                <div class="code-block" id="loginEnteredPassword"></div>
+                <p class="font-medium text-gray-700 mt-2">Newly Generated Fingerprint:</p>
+                <div class="code-block" id="loginGeneratedFingerprint"></div>
+                <p class="font-medium text-gray-700 mt-2">Stored Fingerprint in Database:</p>
+                <div class="code-block" id="loginStoredFingerprint"></div>
+                <div id="loginResult" class="mt-4 p-3 rounded-md text-center"></div>
+            </div>
+            <div class="explanation-box mt-4">
+                <p><i class="fas fa-redo text-blue-500"></i> The system regenerates the fingerprint whenever the user enters a password during a login attempt.</p>
+                <p><i class="fas fa-equals text-purple-500"></i> The system compares this regenerated fingerprint against the stored value to grant or deny access.</p>
+            </div>
+            <div class="button-container">
+                <button onclick="showStep('step2Nav')" class="action-button back-button w-full-mobile">
+                    <i class="fas fa-angle-left mr-2"></i> Back: One-Way Hashing
+                </button>
+                <button onclick="showStep('step4Nav')" class="action-button nav-button w-full-mobile">
+                    Next: Rainbow Tables <i class="fas fa-angle-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="step4Nav" class="step-container step-hidden">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+                <i class="fas fa-table icon text-red-500"></i>Step 6 & 7: The Rainbow Table Threat
+            </h2>
+            <p class="text-gray-600 mb-2">If an attacker gets access to your database of fingerprints, they can use a "rainbow table" – a pre-computed list of passwords and their corresponding hashes – to find the original passwords.</p>
+            
+            <div class="my-4">
+                 <p class="font-medium text-gray-700">Simplified Rainbow Table:</p>
+                <table class="db-table">
+                    <thead><tr><th>Password</th><th>Fingerprint (Hash)</th></tr></thead>
+                    <tbody>
+                        <tr><td>password123</td><td id="rtHash1"></td></tr>
+                        <tr><td>qwerty</td><td id="rtHash2"></td></tr>
+                        <tr><td>admin</td><td id="rtHash3"></td></tr>
+                        <tr><td><span class="highlight" id="rtPasswordMatch">your_password_here</span></td><td class="highlight" id="rtHashMatch"></td></tr>
+                         <tr><td>secret</td><td id="rtHash4"></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="rainbowAttackResult" class="mt-4 p-3 rounded-md text-center hidden"></div>
+            <div class="explanation-box">
+                <p><i class="fas fa-search text-orange-500"></i> It's possible to find a password from a fingerprint if the hash is in a rainbow table.</p>
+                <p><i class="fas fa-link text-red-500"></i> A rainbow table is a map between pre-computed fingerprints and passwords.</p>
+                <p class="mt-2"><span class="warning"><i class="fas fa-exclamation-triangle"></i> This is a major vulnerability if only plain hashes are stored!</span></p>
+            </div>
+            <div class="button-container">
+                <button onclick="showStep('step3Nav')" class="action-button back-button w-full-mobile">
+                    <i class="fas fa-angle-left mr-2"></i> Back: Login Process
+                </button>
+                <button onclick="showStep('step5Nav')" class="action-button nav-button w-full-mobile">
+                    Next: Introducing Salt <i class="fas fa-angle-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="step5Nav" class="step-container step-hidden">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+                <i class="fas fa-pepper-hot icon text-indigo-500"></i>Step 8, 9 & 10: Salting to the Rescue!
+            </h2>
+            <p class="text-gray-600 mb-2">To combat rainbow tables, we use "salt" – a unique random string added to each password <span class="highlight">before</span> hashing.</p>
+
+            <div class="my-4">
+                <p class="font-medium text-gray-700">Password:</p>
+                <div class="code-block" id="saltPassword"></div>
+                <p class="font-medium text-gray-700 mt-2">Generated Salt (unique per user):</p>
+                <div class="code-block"><span id="saltValue" class="salt-value"></span></div>
+                <p class="font-medium text-gray-700 mt-2">Password + Salt:</p>
+                <div class="code-block" id="passwordPlusSalt"></div>
+                <p class="font-medium text-gray-700 mt-2">New Fingerprint (Hash of Password + Salt):</p>
+                <div class="code-block" id="saltedHash"></div>
+            </div>
+
+            <div class="explanation-box">
+                <p><i class="fas fa-random text-purple-500"></i> The system adds salt, a unique random string, to the password to invalidate rainbow table values.</p>
+                <p><i class="fas fa-save text-blue-500"></i> The database stores the salt alongside the (salted) fingerprint.</p>
+            </div>
+
+            <div class="mt-4">
+                 <p class="font-medium text-gray-700 mb-2">Simulated Database (with Salt):</p>
+                <table class="db-table">
+                    <thead><tr><th>Username</th><th>Salt</th><th>Password Fingerprint (Salted)</th></tr></thead>
+                    <tbody id="dbTableSalted">
+                        <tr><td>user123</td><td id="dbSalt">---</td><td id="dbSaltedFingerprint">---</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <p class="text-gray-600 mt-6 mb-2">Now, if an attacker tries the rainbow table against the <span class="highlight">salted hash</span>...</p>
+            <div id="rainbowAttackSaltedResult" class="mt-1 p-3 rounded-md text-center">
+                The rainbow table (which contains hashes of unsalted passwords) <span class="warning">will not find a match</span> for the salted hash!
+            </div>
+
+            <div class="explanation-box mt-4">
+                 <p><i class="fas fa-sync-alt text-green-500"></i> During login, the server retrieves the user's salt, combines it with the entered password, hashes the result, and then compares it to the stored salted fingerprint.</p>
+                 <p class="mt-2"><span class="success"><i class="fas fa-shield-check"></i> Salting significantly improves password security by making rainbow table attacks impractical!</span></p>
+            </div>
+            <div class="button-container">
+                <button onclick="showStep('step4Nav')" class="action-button back-button w-full-mobile">
+                    <i class="fas fa-angle-left mr-2"></i> Back: Rainbow Tables
+                </button>
+                <button onclick="restartDemo()" class="action-button bg-red-500 hover:bg-red-600 w-full-mobile">
+                    Restart Demo <i class="fas fa-redo ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="text-center mt-12 mb-8">
+        <p class="text-sm text-gray-500">This is a simplified visual demonstration. Real-world hashing algorithms (e.g., bcrypt, Argon2) are more complex and secure.</p>
+    </footer>
+
+    <script>
+        // --- Global State ---
+        let originalPassword = "";
+        let currentHash = "";
+        let currentSalt = "";
+        let currentSaltedHash = "";
+
+        // --- DOM Elements (Copied from previous version, no changes needed here) ---
+        const passwordInput1 = document.getElementById('passwordInput1');
+        const hashButton = document.getElementById('hashButton');
+        const step1Output = document.getElementById('step1Output');
+        const originalPassword1El = document.getElementById('originalPassword1');
+        const hashedPassword1El = document.getElementById('hashedPassword1');
+        const dbFingerprint1El = document.getElementById('dbFingerprint1');
+        
+        const hashedPassword2El = document.getElementById('hashedPassword2');
+
+        const loginPasswordInput = document.getElementById('loginPasswordInput');
+        const loginButton = document.getElementById('loginButton');
+        const loginAttemptOutput = document.getElementById('loginAttemptOutput');
+        const loginEnteredPasswordEl = document.getElementById('loginEnteredPassword');
+        const loginGeneratedFingerprintEl = document.getElementById('loginGeneratedFingerprint');
+        const loginStoredFingerprintEl = document.getElementById('loginStoredFingerprint');
+        const loginResultEl = document.getElementById('loginResult');
+
+        const rtHash1El = document.getElementById('rtHash1');
+        const rtHash2El = document.getElementById('rtHash2');
+        const rtHash3El = document.getElementById('rtHash3');
+        const rtHash4El = document.getElementById('rtHash4');
+        const rtPasswordMatchEl = document.getElementById('rtPasswordMatch');
+        const rtHashMatchEl = document.getElementById('rtHashMatch');
+        const rainbowAttackResultEl = document.getElementById('rainbowAttackResult');
+
+        const saltPasswordEl = document.getElementById('saltPassword');
+        const saltValueEl = document.getElementById('saltValue');
+        const passwordPlusSaltEl = document.getElementById('passwordPlusSalt');
+        const saltedHashEl = document.getElementById('saltedHash');
+        const dbSaltEl = document.getElementById('dbSalt');
+        const dbSaltedFingerprintEl = document.getElementById('dbSaltedFingerprint');
+        const rainbowAttackSaltedResultEl = document.getElementById('rainbowAttackSaltedResult');
+
+        // --- Helper Functions ---
+        // Simplified "hash" function for demonstration. NOT for real security.
+        function simpleHash(str) {
+            if (!str) return "empty_hash_value";
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash |= 0; // Convert to 32bit integer
+            }
+            // Make it look more like a typical hash output (hex-like)
+            return 'sim_hash_' + Math.abs(hash).toString(16).padStart(8, '0') + '_' + str.length;
+        }
+
+        function generateSalt() {
+            return 'salt_' + Math.random().toString(36).substring(2, 10);
+        }
+
+        // Function to show a specific step and hide others
+        function showStep(stepId) {
+            // Hide all step containers
+            document.querySelectorAll('.step-container').forEach(container => {
+                container.classList.remove('step-visible');
+                container.classList.add('step-hidden');
+            });
+            // Show the target step container
+            const currentStep = document.getElementById(stepId);
+            if (currentStep) {
+                currentStep.classList.remove('step-hidden');
+                currentStep.classList.add('step-visible');
+                // Scroll to the top of the step for better visibility
+                currentStep.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            // Update dynamic content based on the current step
+            updateStepContent(stepId);
+        }
+        
+        // Function to update the content of a step when it's shown
+        function updateStepContent(stepId) {
+            // Logic for Step 3: One-Way Hashing
+            if (stepId === 'step2Nav') { 
+                hashedPassword2El.textContent = currentHash || "No hash generated yet.";
+            } 
+            // Logic for Step 4 & 5: Login Process
+            else if (stepId === 'step3Nav') { 
+                loginStoredFingerprintEl.textContent = currentHash || "No hash stored yet.";
+                loginAttemptOutput.classList.add('hidden'); // Reset login attempt view
+                loginPasswordInput.value = ""; // Clear login input
+            } 
+            // Logic for Step 6 & 7: Rainbow Table
+            else if (stepId === 'step4Nav') { 
+                // Populate rainbow table with example hashes
+                rtHash1El.textContent = simpleHash("password123");
+                rtHash2El.textContent = simpleHash("qwerty");
+                rtHash3El.textContent = simpleHash("admin");
+                rtHash4El.textContent = simpleHash("secret");
+
+                // If a password was set in Step 1, show how it would appear in a rainbow table
+                if (originalPassword && currentHash) {
+                    rtPasswordMatchEl.textContent = originalPassword;
+                    rtHashMatchEl.textContent = currentHash;
+                    // Highlight the matching row
+                    rtHashMatchEl.classList.add('bg-yellow-100', 'text-yellow-700', 'p-1', 'rounded');
+                    rtPasswordMatchEl.classList.add('bg-yellow-100', 'text-yellow-700', 'p-1', 'rounded');
+                    rainbowAttackResultEl.innerHTML = `An attacker with the database fingerprint (<span class="code-block !inline-block !p-1 !my-0">${currentHash}</span>) can look it up in their rainbow table and find your password: <span class="warning">${originalPassword}</span>!`;
+                    rainbowAttackResultEl.classList.remove('hidden');
+                } else {
+                    // Default placeholder if no password set yet
+                    rtPasswordMatchEl.textContent = "your_password_here";
+                    rtHashMatchEl.textContent = "corresponding_hash";
+                     rtHashMatchEl.classList.remove('bg-yellow-100', 'text-yellow-700', 'p-1', 'rounded'); // Ensure highlighting is removed
+                    rtPasswordMatchEl.classList.remove('bg-yellow-100', 'text-yellow-700', 'p-1', 'rounded');
+                    rainbowAttackResultEl.textContent = "First, set a password in Step 1 to see the rainbow table attack.";
+                    rainbowAttackResultEl.classList.remove('hidden');
+                }
+            } 
+            // Logic for Step 8, 9 & 10: Salting
+            else if (stepId === 'step5Nav') { 
+                if (originalPassword) {
+                    // Generate a new salt and salted hash if not already done for this session
+                    if (!currentSalt || !currentSaltedHash || saltPasswordEl.textContent !== originalPassword) {
+                        currentSalt = generateSalt();
+                        currentSaltedHash = simpleHash(originalPassword + currentSalt);
+                    }
+                    
+                    // Display password, salt, and salted hash information
+                    saltPasswordEl.textContent = originalPassword;
+                    saltValueEl.textContent = currentSalt;
+                    passwordPlusSaltEl.textContent = originalPassword + " + " + currentSalt; // Show concatenation
+                    saltedHashEl.textContent = currentSaltedHash;
+                    
+                    // Update simulated database with salt
+                    dbSaltEl.textContent = currentSalt;
+                    dbSaltedFingerprintEl.textContent = currentSaltedHash;
+
+                    // Check if the salted hash would be found in the simplified rainbow table
+                    const rainbowHashes = [rtHash1El.textContent, rtHash2El.textContent, rtHash3El.textContent, rtHashMatchEl.textContent, rtHash4El.textContent];
+                    if (rainbowHashes.includes(currentSaltedHash)) {
+                         rainbowAttackSaltedResultEl.innerHTML = `The salted hash (<span class="code-block !inline-block !p-1 !my-0">${currentSaltedHash}</span>) <span class="warning">was found</span> in the (simplified) rainbow table. This is highly unlikely with real-world salts and secure hash functions!`;
+                    } else {
+                         rainbowAttackSaltedResultEl.innerHTML = `The salted hash (<span class="code-block !inline-block !p-1 !my-0">${currentSaltedHash}</span>) is <span class="success">NOT found</span> in the rainbow table of unsalted password hashes!`;
+                    }
+
+                } else {
+                     // Default placeholders if no password set yet
+                     saltPasswordEl.textContent = "Set password in Step 1";
+                     saltValueEl.textContent = "---";
+                     passwordPlusSaltEl.textContent = "---";
+                     saltedHashEl.textContent = "---";
+                     dbSaltEl.textContent = "---";
+                     dbSaltedFingerprintEl.textContent = "---";
+                     rainbowAttackSaltedResultEl.textContent = "First, set a password in Step 1 to see salting in action.";
+                }
+            }
+        }
+
+        // --- Event Listeners ---
+        // Event listener for the "Hash & Store" button in Step 1
+        hashButton.addEventListener('click', () => {
+            originalPassword = passwordInput1.value;
+            if (!originalPassword) {
+                // In-page message instead of alert
+                const tempMsg = document.createElement('p');
+                tempMsg.textContent = "Please enter a password.";
+                tempMsg.className = "text-red-500 text-sm mb-2";
+                passwordInput1.parentNode.insertBefore(tempMsg, passwordInput1.nextSibling);
+                setTimeout(() => tempMsg.remove(), 3000);
+                return;
+            }
+            currentHash = simpleHash(originalPassword);
+            currentSalt = ""; // Reset salt when a new password is set
+            currentSaltedHash = ""; // Reset salted hash
+
+            originalPassword1El.textContent = originalPassword;
+            hashedPassword1El.textContent = currentHash;
+            dbFingerprint1El.textContent = currentHash; // Update simulated DB
+            
+            step1Output.classList.remove('hidden'); // Show the output section for Step 1
+        });
+
+        // Event listener for the "Attempt Login" button in Step 4 & 5
+        loginButton.addEventListener('click', () => {
+            const enteredPassword = loginPasswordInput.value;
+            if (!enteredPassword) {
+                 const tempMsg = document.createElement('p');
+                tempMsg.textContent = "Please enter a password to attempt login.";
+                tempMsg.className = "text-red-500 text-sm mb-2";
+                loginPasswordInput.parentNode.insertBefore(tempMsg, loginPasswordInput.nextSibling);
+                setTimeout(() => tempMsg.remove(), 3000);
+                return;
+            }
+            if (!currentHash) { // Check if a hash was generated in Step 1
+                const tempMsg = document.createElement('p');
+                tempMsg.textContent = "Please complete Step 1 (Hashing & Storing) first.";
+                tempMsg.className = "text-red-500 text-sm mb-2";
+                loginPasswordInput.parentNode.insertBefore(tempMsg, loginPasswordInput.nextSibling);
+                setTimeout(() => tempMsg.remove(), 3000);
+                return;
+            }
+
+            const newlyGeneratedHash = simpleHash(enteredPassword);
+            loginEnteredPasswordEl.textContent = enteredPassword;
+            loginGeneratedFingerprintEl.textContent = newlyGeneratedHash;
+            loginStoredFingerprintEl.textContent = currentHash; // Show the stored hash for comparison
+
+            // Compare newly generated hash with the stored hash
+            if (newlyGeneratedHash === currentHash) {
+                loginResultEl.innerHTML = `<i class="fas fa-check-circle icon success"></i> <span class="success">Access Granted!</span> The fingerprints match.`;
+                loginResultEl.className = 'mt-4 p-3 rounded-md text-center bg-green-100 text-green-700';
+            } else {
+                loginResultEl.innerHTML = `<i class="fas fa-times-circle icon warning"></i> <span class="warning">Access Denied!</span> The fingerprints do not match.`;
+                loginResultEl.className = 'mt-4 p-3 rounded-md text-center bg-red-100 text-red-700';
+            }
+            loginAttemptOutput.classList.remove('hidden'); // Show the login attempt results
+        });
+        
+        // Function to restart the demonstration
+        function restartDemo() {
+            // Reset global state variables
+            originalPassword = "";
+            currentHash = "";
+            currentSalt = "";
+            currentSaltedHash = "";
+
+            // Clear input fields
+            passwordInput1.value = "";
+            loginPasswordInput.value = "";
+
+            // Hide output sections
+            step1Output.classList.add('hidden');
+            loginAttemptOutput.classList.add('hidden');
+            
+            // Reset text content of display elements in Step 1
+            originalPassword1El.textContent = "";
+            hashedPassword1El.textContent = "";
+            dbFingerprint1El.textContent = "---";
+            
+            // Reset text content for Step 3
+            hashedPassword2El.textContent = "No hash generated yet.";
+            
+            // Reset text content for Step 4 & 5
+            loginStoredFingerprintEl.textContent = "No hash stored yet.";
+            loginResultEl.textContent = "";
+            loginResultEl.className = 'mt-4 p-3 rounded-md text-center'; // Reset result style
+
+            // Reset rainbow table display in Step 6 & 7
+            rtPasswordMatchEl.textContent = "your_password_here";
+            rtHashMatchEl.textContent = "corresponding_hash";
+            rtHashMatchEl.classList.remove('bg-yellow-100', 'text-yellow-700', 'p-1', 'rounded');
+            rtPasswordMatchEl.classList.remove('bg-yellow-100', 'text-yellow-700', 'p-1', 'rounded');
+            rainbowAttackResultEl.textContent = "First, set a password in Step 1 to see the rainbow table attack.";
+            rainbowAttackResultEl.classList.add('hidden');
+            
+            // Reset salting display in Step 8, 9 & 10
+            saltPasswordEl.textContent = "Set password in Step 1";
+            saltValueEl.textContent = "---";
+            passwordPlusSaltEl.textContent = "---";
+            saltedHashEl.textContent = "---";
+            dbSaltEl.textContent = "---";
+            dbSaltedFingerprintEl.textContent = "---";
+            rainbowAttackSaltedResultEl.textContent = "First, set a password in Step 1 to see salting in action.";
+
+            showStep('step1'); // Navigate back to the first step
+        }
+
+        // Initialize the first step when the page loads
+        window.onload = () => {
+            // updateStepContent('step1'); // Call if step1 has dynamic content to load initially
+        };
+
+    </script>
+</body>
+</html>
