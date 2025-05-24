@@ -3,385 +3,698 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Password Security Explanation</title>
+    <title>Learn System Design Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <style>
+        /* Global styles for the hub */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* Light gray background */
+            background-color: #f8fafc; /* Neutral light background (slate 50) */
+            color: #1f2937; /* Default text color (gray 800) */
+            margin: 0;
+            padding: 0;
         }
-        .step-container {
-            background-color: white;
-            padding: 2rem;
-            border-radius: 0.75rem; /* Rounded corners */
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            margin-bottom: 2rem;
-            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+
+        .outer-page-section,
+        .hub-page-section { /* .hub-page-section is for sections *within* interactiveSystemDesignHubContent */
+            display: none; /* Hidden by default, JS will manage visibility */
         }
-        .step-hidden {
-            opacity: 0;
-            transform: translateY(20px);
-            display: none; /* Initially hide subsequent steps */
-        }
-        .step-visible {
-            opacity: 1;
-            transform: translateY(0);
+        .outer-page-section.visible,
+        .hub-page-section.visible {
             display: block;
         }
-        .code-block {
-            background-color: #1f2937; /* Dark gray for code blocks */
-            color: #d1d5db; /* Light gray text */
-            padding: 1rem;
-            border-radius: 0.5rem;
-            font-family: 'Courier New', Courier, monospace;
-            white-space: pre-wrap;
-            word-break: break-all;
-            margin-top: 0.5rem;
-            margin-bottom: 0.5rem;
+
+        /* Landing Page Styles (for both outer and inner landing) */
+        .landing-header {
+            text-align: center;
+            padding: 2.5rem 1rem; /* Increased padding */
+            color: white;
+            border-radius: 0 0 1.5rem 1.5rem; /* Rounded bottom corners */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15); /* Slightly enhanced shadow */
         }
-        .arrow {
-            font-size: 2rem;
-            color: #6b7280; /* Medium gray */
-            margin: 0 1rem;
+        .landing-header .icon {
+            font-size: 3.5rem; /* Larger icon */
+            margin-bottom: 0.75rem;
         }
-        .icon {
-            font-size: 1.5rem;
-            margin-right: 0.5rem;
+        .landing-title {
+            font-size: 2.75rem; /* Tailwind text-4xl/5xl */
+            font-weight: bold;
         }
-        .db-table {
-            border-collapse: collapse;
+        .landing-subtitle {
+            font-size: 1.25rem; /* Tailwind text-xl */
+            margin-top: 0.75rem;
+            opacity: 0.9;
+        }
+        .tiles-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem;
+            padding: 3rem 1rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .demo-tile {
+            background-color: white;
+            border-radius: 1rem; /* More rounded */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 2.5rem; /* Increased padding */
             width: 100%;
-            margin-top: 1rem;
-            border-radius: 0.5rem;
-            overflow: hidden; /* Ensures border-radius applies to table */
+            max-width: 380px; /* Slightly wider */
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            border-left: 5px solid transparent; /* For accent color */
         }
-        .db-table th, .db-table td {
-            border: 1px solid #e5e7eb; /* Light gray border */
-            padding: 0.75rem;
-            text-align: left;
+        .demo-tile:hover {
+            transform: translateY(-8px); /* More pronounced hover */
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
         }
-        .db-table th {
-            background-color: #f9fafb; /* Very light gray for header */
-            color: #374151; /* Darker gray text */
+        .demo-tile .tile-icon {
+            font-size: 3rem; /* Larger tile icon */
+            margin-bottom: 1.25rem;
+            transition: transform 0.2s ease-in-out; /* Added for icon magnification */
         }
-        .highlight {
-            color: #3b82f6; /* Blue for highlighting */
-            font-weight: bold;
+        .demo-tile:hover .tile-icon {
+            transform: scale(1.15); /* Magnify icon on tile hover */
         }
-        .warning {
-            color: #ef4444; /* Red for warnings */
-            font-weight: bold;
+        .demo-tile h3 {
+            font-size: 1.75rem; /* text-2xl/3xl */
+            font-weight: 600; /* semibold */
+            color: #374151; /* gray-700 */
+            margin-bottom: 0.75rem;
         }
-        .success {
-            color: #10b981; /* Green for success */
-            font-weight: bold;
+        .demo-tile p {
+            font-size: 1rem; /* text-base */
+            color: #6b7280; /* gray-500 */
+            line-height: 1.6;
         }
-        .salt-value {
-            background-color: #fef3c7; /* Light yellow for salt */
-            color: #713f12; /* Brown text */
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            font-family: 'Courier New', Courier, monospace;
-        }
-        .password-input {
-            border: 1px solid #d1d5db;
-            padding: 0.5rem 0.75rem;
-            border-radius: 0.375rem;
-            width: 100%;
-            max-width: 300px;
-        }
-        .action-button {
-            background-color: #3b82f6; /* Blue */
+
+        /* General Back Button Styling */
+        .general-back-button {
             color: white;
             padding: 0.75rem 1.5rem;
             border-radius: 0.375rem;
             font-weight: 500;
             transition: background-color 0.2s;
             cursor: pointer;
-            text-align: center;
+            border: none;
+            margin: 2rem auto; /* Consistent margin */
+            display: block; 
+            width: fit-content;
+            font-size: 1rem;
         }
-        .action-button:hover {
-            background-color: #2563eb; /* Darker blue */
+        .general-back-button:hover {
+            opacity: 0.9;
         }
-        .action-button:disabled {
-            background-color: #9ca3af; /* Gray when disabled */
-            cursor: not-allowed;
+
+        /* Styles from Password Security Demo */
+        #passwordDemoSection .step-container {
+            background-color: white; padding: 2rem; border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem; transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
         }
-        .nav-button {
-            background-color: #10b981; /* Green */
+        #passwordDemoSection .step-hidden { opacity: 0; transform: translateY(20px); display: none; }
+        #passwordDemoSection .step-visible { opacity: 1; transform: translateY(0); display: block; }
+        #passwordDemoSection .code-block {
+            background-color: #1f2937; color: #d1d5db; padding: 1rem; border-radius: 0.5rem;
+            font-family: 'Courier New', Courier, monospace; white-space: pre-wrap; word-break: break-all;
+            margin-top: 0.5rem; margin-bottom: 0.5rem; font-size: 0.875rem;
         }
-        .nav-button:hover {
-            background-color: #059669; /* Darker green */
+        #passwordDemoSection .arrow { font-size: 2rem; color: #6b7280; margin: 0 1rem; }
+        #passwordDemoSection .icon { font-size: 1.5rem; margin-right: 0.5rem; }
+        #passwordDemoSection .db-table { border-collapse: collapse; width: 100%; margin-top: 1rem; border-radius: 0.5rem; overflow: hidden; }
+        #passwordDemoSection .db-table th, #passwordDemoSection .db-table td { border: 1px solid #e5e7eb; padding: 0.75rem; text-align: left; }
+        #passwordDemoSection .db-table th { background-color: #f9fafb; color: #374151; }
+        #passwordDemoSection .highlight { color: #3b82f6; font-weight: bold; }
+        #passwordDemoSection .warning { color: #ef4444; font-weight: bold; }
+        #passwordDemoSection .success { color: #10b981; font-weight: bold; }
+        #passwordDemoSection .salt-value { background-color: #fef3c7; color: #713f12; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-family: 'Courier New', Courier, monospace; }
+        #passwordDemoSection .password-input { border: 1px solid #d1d5db; padding: 0.5rem 0.75rem; border-radius: 0.375rem; width: 100%; max-width: 300px; }
+        #passwordDemoSection .action-button {
+            background-color: #3b82f6; color: white; padding: 0.75rem 1.5rem; border-radius: 0.375rem;
+            font-weight: 500; transition: background-color 0.2s; cursor: pointer; text-align: center;
         }
-        .back-button {
-            background-color: #6b7280; /* Medium Gray */
+        #passwordDemoSection .action-button:hover { background-color: #2563eb; }
+        #passwordDemoSection .action-button:disabled { background-color: #9ca3af; cursor: not-allowed; }
+        #passwordDemoSection .nav-button { background-color: #10b981; }
+        #passwordDemoSection .nav-button:hover { background-color: #059669; }
+        #passwordDemoSection .back-button { background-color: #6b7280; }
+        #passwordDemoSection .back-button:hover { background-color: #4b5563; }
+        #passwordDemoSection .explanation-box {
+            background-color: #eef2ff; border-left: 4px solid #6366f1; padding: 1rem; margin-top: 1rem;
+            border-radius: 0.375rem; color: #4338ca;
         }
-        .back-button:hover {
-            background-color: #4b5563; /* Darker Gray */
-        }
-        .explanation-box {
-            background-color: #eef2ff; /* Light indigo background */
-            border-left: 4px solid #6366f1; /* Indigo border */
-            padding: 1rem;
-            margin-top: 1rem;
-            border-radius: 0.375rem;
-            color: #4338ca; /* Indigo text */
-        }
-        .button-container {
-            display: flex;
-            flex-direction: column; /* Stack buttons vertically on small screens */
-            gap: 0.75rem; /* Space between buttons */
-            margin-top: 1.5rem; /* mt-6 */
-        }
-        @media (min-width: 640px) { /* sm breakpoint */
-            .button-container {
-                flex-direction: row; /* Buttons side-by-side on larger screens */
-                justify-content: space-between; /* Space out back and next buttons */
-            }
-            .button-container .action-button {
-                 width: auto; /* Allow buttons to size based on content */
-            }
-            .button-container .action-button.w-full-mobile {
-                 width: 100%; /* Keep full width on mobile if specified */
-            }
+        #passwordDemoSection .button-container { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; }
+        @media (min-width: 640px) {
+            #passwordDemoSection .button-container { flex-direction: row; justify-content: space-between; }
+            #passwordDemoSection .button-container .action-button { width: auto; }
+            #passwordDemoSection .button-container .action-button.w-full-mobile { width: 100%; }
              @media (min-width: 640px) {
-                .button-container .action-button.w-full-mobile {
-                    width: auto;
-                }
+                #passwordDemoSection .button-container .action-button.w-full-mobile { width: auto; }
             }
+        }
+
+        /* Styles from ETA Computation Demo */
+        #etaDemoSection .step-container {
+            background-color: white; padding: 2rem; border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem; transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+        }
+        #etaDemoSection .step-hidden { opacity: 0; transform: translateY(20px); display: none; }
+        #etaDemoSection .step-visible { opacity: 1; transform: translateY(0); display: block; }
+        #etaDemoSection .explanation-box {
+            background-color: #e0f2fe; border-left: 4px solid #0ea5e9; padding: 1rem;
+            margin-top: 1.5rem; margin-bottom: 1rem; border-radius: 0.375rem; color: #0369a1;
+        }
+        #etaDemoSection .action-button {
+            background-color: #0ea5e9; color: white; padding: 0.75rem 1.5rem; border-radius: 0.375rem;
+            font-weight: 500; transition: background-color 0.2s; cursor: pointer; text-align: center;
+        }
+        #etaDemoSection .action-button:hover { background-color: #0284c7; }
+        #etaDemoSection .nav-button { background-color: #10b981; }
+        #etaDemoSection .nav-button:hover { background-color: #059669; }
+        #etaDemoSection .back-button { background-color: #6b7280; }
+        #etaDemoSection .back-button:hover { background-color: #4b5563; }
+        #etaDemoSection .button-container { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; }
+        @media (min-width: 640px) {
+            #etaDemoSection .button-container { flex-direction: row; justify-content: space-between; }
+            #etaDemoSection .button-container .action-button { width: auto; }
+            #etaDemoSection .button-container .action-button.w-full-mobile { width: 100%; }
+             @media (min-width: 640px) {
+                #etaDemoSection .button-container .action-button.w-full-mobile { width: auto; }
+            }
+        }
+        #etaDemoSection .icon { font-size: 1.5rem; margin-right: 0.5rem; }
+        #etaDemoSection .graph-container {
+            position: relative; width: 100%; max-width: 400px; height: 250px;
+            border: 1px solid #cbd5e1; border-radius: 0.5rem; margin: 1.5rem auto; background-color: #f8fafc;
+        }
+        #etaDemoSection .node {
+            position: absolute; width: 40px; height: 40px; background-color: #38bdf8; color: white;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 0.9rem;
+        }
+        #etaDemoSection .edge {
+            position: absolute; background-color: #64748b; height: 4px;
+            transform-origin: left center; z-index: -1; display: flex; align-items: center; justify-content: center;
+        }
+        #etaDemoSection .edge-label {
+            background-color: white; padding: 2px 5px; border-radius: 3px; font-size: 0.75rem;
+            color: #334155; border: 1px solid #e2e8f0;
+        }
+        #etaDemoSection .highlight-path { background-color: #fbbf24; box-shadow: 0 0 10px #fbbf24; }
+        #etaDemoSection .partition { position: absolute; border: 2px dashed; border-radius: 0.5rem; opacity: 0.7; }
+        #etaDemoSection .code-block {
+            background-color: #1f2937; color: #d1d5db; padding: 0.75rem; border-radius: 0.5rem;
+            font-family: 'Courier New', Courier, monospace; white-space: pre-wrap; word-break: break-all;
+            margin-top: 0.5rem; font-size: 0.875rem;
         }
     </style>
 </head>
-<body class="p-4 md:p-8">
-    <header class="text-center mb-12">
-        <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Interactive Password Security Explained</h1>
-        <p class="text-lg text-gray-600 mt-2">Follow the steps to understand how password hashing and salting work.</p>
-    </header>
-
-    <main class="max-w-3xl mx-auto">
-        <div id="step1" class="step-container step-visible">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-4">
-                <i class="fas fa-key icon text-blue-500"></i>Step 1 & 2: Hashing & Storing Fingerprints
-            </h2>
-            <p class="text-gray-600 mb-2">Enter a password to see how it's transformed into a "fingerprint" (hash) for storage.</p>
-            <div class="flex flex-col sm:flex-row items-center gap-4 mb-4">
-                <input type="text" id="passwordInput1" class="password-input" placeholder="Enter your password">
-                <button id="hashButton" class="action-button w-full sm:w-auto">
-                    <i class="fas fa-cogs"></i> Hash & Store
-                </button>
+<body>
+    <div id="learnSystemDesignPage" class="outer-page-section">
+        <header class="landing-header" style="background-color: #22c55e;"> <i class="fas fa-graduation-cap icon"></i>
+            <h1 class="landing-title">Learn System Design</h1>
+            <p class="landing-subtitle">Your gateway to understanding complex systems.</p>
+        </header>
+        <div class="tiles-container">
+            <div id="tileLaunchInteractiveHub" class="demo-tile" style="border-left-color: #22c55e;">
+                <i class="fas fa-cubes-stacked tile-icon" style="color: #22c55e;"></i>
+                <h3>Interactive System Design Hub</h3>
+                <p>Explore demos on Password Security and ETA Computation.</p>
             </div>
-            
-            <div id="step1Output" class="hidden">
-                <div class="flex flex-col items-center md:flex-row md:items-start justify-around gap-4 my-4">
-                    <div class="text-center">
-                        <p class="font-medium text-gray-700">Your Password:</p>
-                        <div class="code-block" id="originalPassword1"></div>
+            <div id="tileNvidiaDsPrep" class="demo-tile" style="border-left-color: #76b900;"> <i class="fas fa-microchip tile-icon" style="color: #76b900;"></i>
+                <h3>NVIDIA Data Science Prep</h3>
+                <p>Resources and tools for NVIDIA data science preparation.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="interactiveSystemDesignHubContent" class="outer-page-section">
+        <div id="hubLandingPageSection" class="hub-page-section">
+            <header class="landing-header" style="background-color: #0ea5e9;">
+                <i class="fas fa-cubes-stacked icon"></i>
+                <h1 class="landing-title">Interactive System Design Hub</h1>
+                <p class="landing-subtitle">Explore complex system concepts through interactive visualizations.</p>
+            </header>
+            <div class="tiles-container">
+                <div id="tilePassword" class="demo-tile" style="border-left-color: #6366f1;">
+                    <i class="fas fa-key tile-icon" style="color: #6366f1;"></i>
+                    <h3>Password Security</h3>
+                    <p>Understand how password hashing, salting, and rainbow tables work.</p>
+                </div>
+                <div id="tileETA" class="demo-tile" style="border-left-color: #ec4899;">
+                    <i class="fas fa-route tile-icon" style="color: #ec4899;"></i>
+                    <h3>ETA Computation</h3>
+                    <p>Learn about map graphs, shortest paths, traffic, and map matching.</p>
+                </div>
+            </div>
+            <button onclick="showOuterPage('learnSystemDesignPage')" class="general-back-button" style="background-color: #f97316;">
+                <i class="fas fa-home mr-2"></i>Back to Main Portal
+            </button>
+        </div>
+
+        <div id="passwordDemoSection" class="hub-page-section">
+            <button onclick="showHubPage('hubLandingPageSection')" class="general-back-button" style="background-color: #6b7280;">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Demo Selection
+            </button>
+            <header class="text-center mb-12 pt-8">
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Interactive Password Security Explained</h1>
+                <p class="text-lg text-gray-600 mt-2">Follow the steps to understand how password hashing and salting work.</p>
+            </header>
+            <main class="max-w-3xl mx-auto">
+                <div id="step1" class="step-container step-visible">
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+                        <i class="fas fa-key icon text-blue-500"></i>Step 1 & 2: Hashing & Storing Fingerprints
+                    </h2>
+                    <p class="text-gray-600 mb-2">Enter a password to see how it's transformed into a "fingerprint" (hash) for storage.</p>
+                    <div class="flex flex-col sm:flex-row items-center gap-4 mb-4">
+                        <input type="text" id="passwordInput1" class="password-input" placeholder="Enter your password">
+                        <button id="hashButton" class="action-button w-full sm:w-auto">
+                            <i class="fas fa-cogs"></i> Hash & Store
+                        </button>
                     </div>
-                    <div class="arrow hidden md:block self-center"><i class="fas fa-arrow-right"></i></div>
-                    <div class="arrow md:hidden self-center"><i class="fas fa-arrow-down"></i></div>
-                    <div class="text-center">
-                        <p class="font-medium text-gray-700">Generated Fingerprint (Hash):</p>
-                        <div class="code-block" id="hashedPassword1"></div>
+                    <div id="step1Output" class="hidden">
+                        <div class="flex flex-col items-center md:flex-row md:items-start justify-around gap-4 my-4">
+                            <div class="text-center">
+                                <p class="font-medium text-gray-700">Your Password:</p>
+                                <div class="code-block" id="originalPassword1"></div>
+                            </div>
+                            <div class="arrow hidden md:block self-center"><i class="fas fa-arrow-right"></i></div>
+                            <div class="arrow md:hidden self-center"><i class="fas fa-arrow-down"></i></div>
+                            <div class="text-center">
+                                <p class="font-medium text-gray-700">Generated Fingerprint (Hash):</p>
+                                <div class="code-block" id="hashedPassword1"></div>
+                            </div>
+                        </div>
+                        <div class="explanation-box">
+                            <p><i class="fas fa-check-circle text-green-500"></i> The server transforms the password using a hash function to create the fingerprint.</p>
+                            <p><i class="fas fa-database text-blue-500"></i> The database stores <span class="highlight">only the fingerprint</span> and not the original password.</p>
+                        </div>
+                        <div class="mt-4">
+                            <p class="font-medium text-gray-700 mb-2">Simulated Database:</p>
+                            <table class="db-table">
+                                <thead><tr><th>Username</th><th>Password Fingerprint</th></tr></thead>
+                                <tbody id="dbTable1">
+                                    <tr><td>user123</td><td id="dbFingerprint1">---</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="button-container">
+                            <div class="flex-grow"></div> 
+                            <button onclick="passwordDemoShowStep('step2Nav')" class="action-button nav-button w-full-mobile">
+                                Next: One-Way Hashing <i class="fas fa-angle-right ml-2"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <div class="explanation-box">
-                    <p><i class="fas fa-check-circle text-green-500"></i> The server transforms the password using a hash function to create the fingerprint.</p>
-                    <p><i class="fas fa-database text-blue-500"></i> The database stores <span class="highlight">only the fingerprint</span> and not the original password.</p>
+                <div id="step2Nav" class="step-container step-hidden">
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+                        <i class="fas fa-lock icon text-yellow-500"></i>Step 3: The One-Way Hash Function
+                    </h2>
+                    <p class="text-gray-600 mb-2">Hash functions are designed to be one-way. This means it's computationally infeasible to reverse the process and get the original password from its fingerprint.</p>
+                    <div class="flex flex-col items-center md:flex-row md:items-start justify-around gap-4 my-4">
+                        <div class="text-center">
+                            <p class="font-medium text-gray-700">Generated Fingerprint:</p>
+                            <div class="code-block" id="hashedPassword2"></div>
+                        </div>
+                        <div class="arrow hidden md:block self-center"><i class="fas fa-times-circle text-red-500"></i></div>
+                        <div class="arrow md:hidden self-center"><i class="fas fa-arrow-down"></i> <i class="fas fa-times-circle text-red-500 ml-1"></i></div>
+                        <div class="text-center">
+                            <p class="font-medium text-gray-700">Original Password:</p>
+                            <div class="code-block bg-red-100 text-red-700">Cannot be retrieved!</div>
+                        </div>
+                    </div>
+                    <div class="explanation-box">
+                        <p><i class="fas fa-shield-alt text-green-500"></i> The one-way hash function prevents retrieval of the password from a fingerprint. This is a key security feature.</p>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="passwordDemoShowStep('step1')" class="action-button back-button w-full-mobile">
+                            <i class="fas fa-angle-left mr-2"></i> Back: Hashing & Storing
+                        </button>
+                        <button onclick="passwordDemoShowStep('step3Nav')" class="action-button nav-button w-full-mobile">
+                            Next: Login Process <i class="fas fa-angle-right ml-2"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="mt-4">
-                    <p class="font-medium text-gray-700 mb-2">Simulated Database:</p>
-                    <table class="db-table">
-                        <thead><tr><th>Username</th><th>Password Fingerprint</th></tr></thead>
-                        <tbody id="dbTable1">
-                            <tr><td>user123</td><td id="dbFingerprint1">---</td></tr>
-                        </tbody>
-                    </table>
+                <div id="step3Nav" class="step-container step-hidden">
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+                        <i class="fas fa-sign-in-alt icon text-green-500"></i>Step 4 & 5: Login & Verification
+                    </h2>
+                    <p class="text-gray-600 mb-2">When you try to log in, the system re-hashes the password you enter and compares it to the stored fingerprint.</p>
+                    <p class="text-gray-600 mb-4">Try logging in with the password you set in Step 1 (or a different one to see it fail).</p>
+                    <div class="flex flex-col sm:flex-row items-center gap-4 mb-4">
+                        <input type="text" id="loginPasswordInput" class="password-input" placeholder="Enter password to login">
+                        <button id="loginButton" class="action-button w-full sm:w-auto">
+                            <i class="fas fa-check"></i> Attempt Login
+                        </button>
+                    </div>
+                    <div id="loginAttemptOutput" class="hidden">
+                        <p class="font-medium text-gray-700">Password Entered for Login:</p>
+                        <div class="code-block" id="loginEnteredPassword"></div>
+                        <p class="font-medium text-gray-700 mt-2">Newly Generated Fingerprint:</p>
+                        <div class="code-block" id="loginGeneratedFingerprint"></div>
+                        <p class="font-medium text-gray-700 mt-2">Stored Fingerprint in Database:</p>
+                        <div class="code-block" id="loginStoredFingerprint"></div>
+                        <div id="loginResult" class="mt-4 p-3 rounded-md text-center"></div>
+                    </div>
+                    <div class="explanation-box mt-4">
+                        <p><i class="fas fa-redo text-blue-500"></i> The system regenerates the fingerprint whenever the user enters a password during a login attempt.</p>
+                        <p><i class="fas fa-equals text-purple-500"></i> The system compares this regenerated fingerprint against the stored value to grant or deny access.</p>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="passwordDemoShowStep('step2Nav')" class="action-button back-button w-full-mobile">
+                            <i class="fas fa-angle-left mr-2"></i> Back: One-Way Hashing
+                        </button>
+                        <button onclick="passwordDemoShowStep('step4Nav')" class="action-button nav-button w-full-mobile">
+                            Next: Rainbow Tables <i class="fas fa-angle-right ml-2"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="button-container">
-                    <div class="flex-grow"></div> <button onclick="showStep('step2Nav')" class="action-button nav-button w-full-mobile">
-                        Next: One-Way Hashing <i class="fas fa-angle-right ml-2"></i>
-                    </button>
+                <div id="step4Nav" class="step-container step-hidden">
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+                        <i class="fas fa-table icon text-red-500"></i>Step 6 & 7: The Rainbow Table Threat
+                    </h2>
+                    <p class="text-gray-600 mb-2">If an attacker gets access to your database of fingerprints, they can use a "rainbow table" – a pre-computed list of passwords and their corresponding hashes – to find the original passwords.</p>
+                    <div class="my-4">
+                        <p class="font-medium text-gray-700">Simplified Rainbow Table:</p>
+                        <table class="db-table">
+                            <thead><tr><th>Password</th><th>Fingerprint (Hash)</th></tr></thead>
+                            <tbody>
+                                <tr><td>password123</td><td id="rtHash1"></td></tr>
+                                <tr><td>qwerty</td><td id="rtHash2"></td></tr>
+                                <tr><td>admin</td><td id="rtHash3"></td></tr>
+                                <tr><td><span class="highlight" id="rtPasswordMatch">your_password_here</span></td><td class="highlight" id="rtHashMatch"></td></tr>
+                                <tr><td>secret</td><td id="rtHash4"></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="rainbowAttackResult" class="mt-4 p-3 rounded-md text-center hidden"></div>
+                    <div class="explanation-box">
+                        <p><i class="fas fa-search text-orange-500"></i> It's possible to find a password from a fingerprint if the hash is in a rainbow table.</p>
+                        <p><i class="fas fa-link text-red-500"></i> A rainbow table is a map between pre-computed fingerprints and passwords.</p>
+                        <p class="mt-2"><span class="warning"><i class="fas fa-exclamation-triangle"></i> This is a major vulnerability if only plain hashes are stored!</span></p>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="passwordDemoShowStep('step3Nav')" class="action-button back-button w-full-mobile">
+                            <i class="fas fa-angle-left mr-2"></i> Back: Login Process
+                        </button>
+                        <button onclick="passwordDemoShowStep('step5Nav')" class="action-button nav-button w-full-mobile">
+                            Next: Introducing Salt <i class="fas fa-angle-right ml-2"></i>
+                        </button>
+                    </div>
                 </div>
-            </div>
+                <div id="step5Nav" class="step-container step-hidden">
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+                        <i class="fas fa-pepper-hot icon text-indigo-500"></i>Step 8, 9 & 10: Salting to the Rescue!
+                    </h2>
+                    <p class="text-gray-600 mb-2">To combat rainbow tables, we use "salt" – a unique random string added to each password <span class="highlight">before</span> hashing.</p>
+                    <div class="my-4">
+                        <p class="font-medium text-gray-700">Password:</p>
+                        <div class="code-block" id="saltPassword"></div>
+                        <p class="font-medium text-gray-700 mt-2">Generated Salt (unique per user):</p>
+                        <div class="code-block"><span id="saltValue" class="salt-value"></span></div>
+                        <p class="font-medium text-gray-700 mt-2">Password + Salt:</p>
+                        <div class="code-block" id="passwordPlusSalt"></div>
+                        <p class="font-medium text-gray-700 mt-2">New Fingerprint (Hash of Password + Salt):</p>
+                        <div class="code-block" id="saltedHash"></div>
+                    </div>
+                    <div class="explanation-box">
+                        <p><i class="fas fa-random text-purple-500"></i> The system adds salt, a unique random string, to the password to invalidate rainbow table values.</p>
+                        <p><i class="fas fa-save text-blue-500"></i> The database stores the salt alongside the (salted) fingerprint.</p>
+                    </div>
+                    <div class="mt-4">
+                        <p class="font-medium text-gray-700 mb-2">Simulated Database (with Salt):</p>
+                        <table class="db-table">
+                            <thead><tr><th>Username</th><th>Salt</th><th>Password Fingerprint (Salted)</th></tr></thead>
+                            <tbody id="dbTableSalted">
+                                <tr><td>user123</td><td id="dbSalt">---</td><td id="dbSaltedFingerprint">---</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-gray-600 mt-6 mb-2">Now, if an attacker tries the rainbow table against the <span class="highlight">salted hash</span>...</p>
+                    <div id="rainbowAttackSaltedResult" class="mt-1 p-3 rounded-md text-center">
+                        The rainbow table (which contains hashes of unsalted passwords) <span class="warning">will not find a match</span> for the salted hash!
+                    </div>
+                    <div class="explanation-box mt-4">
+                        <p><i class="fas fa-sync-alt text-green-500"></i> During login, the server retrieves the user's salt, combines it with the entered password, hashes the result, and then compares it to the stored salted fingerprint.</p>
+                        <p class="mt-2"><span class="success"><i class="fas fa-shield-check"></i> Salting significantly improves password security by making rainbow table attacks impractical!</span></p>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="passwordDemoShowStep('step4Nav')" class="action-button back-button w-full-mobile">
+                            <i class="fas fa-angle-left mr-2"></i> Back: Rainbow Tables
+                        </button>
+                        <button onclick="passwordDemoRestart()" class="action-button bg-red-500 hover:bg-red-600 w-full-mobile">
+                            Restart This Demo <i class="fas fa-redo ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </main>
+            <footer class="text-center mt-12 mb-8">
+                <p class="text-sm text-gray-500">This is a simplified visual demonstration. Real-world hashing algorithms (e.g., bcrypt, Argon2) are more complex and secure.</p>
+            </footer>
         </div>
 
-        <div id="step2Nav" class="step-container step-hidden">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-4">
-                <i class="fas fa-lock icon text-yellow-500"></i>Step 3: The One-Way Hash Function
-            </h2>
-            <p class="text-gray-600 mb-2">Hash functions are designed to be one-way. This means it's computationally infeasible to reverse the process and get the original password from its fingerprint.</p>
-            
-            <div class="flex flex-col items-center md:flex-row md:items-start justify-around gap-4 my-4">
-                <div class="text-center">
-                    <p class="font-medium text-gray-700">Generated Fingerprint:</p>
-                    <div class="code-block" id="hashedPassword2"></div>
+        <div id="etaDemoSection" class="hub-page-section">
+             <button onclick="showHubPage('hubLandingPageSection')" class="general-back-button" style="background-color: #6b7280;">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Demo Selection
+            </button>
+             <header class="text-center mb-12 pt-8">
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Interactive ETA Computation Explained</h1>
+                <p class="text-lg text-gray-600 mt-2">Discover how mapping services calculate your Estimated Time of Arrival.</p>
+            </header>
+            <main class="max-w-3xl mx-auto">
+                <div id="etaStep1" class="step-container step-visible">
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+                        <i class="fas fa-map-marked-alt icon text-sky-500"></i>1. Physical Map as a Graph
+                    </h2>
+                    <p class="text-gray-600 mb-2">Mapping services represent the real world (roads, intersections) as a mathematical graph.</p>
+                    <ul>
+                        <li class="text-gray-600 ml-4"><i class="fas fa-circle text-xs text-sky-500 mr-2"></i><strong>Nodes (Vertices):</strong> Represent locations like intersections, points of interest, or segments of a road.</li>
+                        <li class="text-gray-600 ml-4"><i class="fas fa-road text-xs text-sky-500 mr-2"></i><strong>Edges:</strong> Represent roads or paths connecting these locations.</li>
+                    </ul>
+                    <div id="graphDiv1" class="graph-container"></div>
+                    <div class="explanation-box">
+                        <p><i class="fas fa-project-diagram text-sky-600"></i> This graph abstraction allows complex road networks to be analyzed computationally. Edges are often <strong>directed</strong> (e.g., one-way streets) and <strong>weighted</strong> (e.g., by distance or travel time).</p>
+                    </div>
+                    <div class="button-container">
+                        <div class="flex-grow"></div>
+                        <button onclick="etaDemoShowStep('etaStep2')" class="action-button nav-button w-full-mobile">
+                            Next: ETA & Shortest Path <i class="fas fa-angle-right ml-2"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="arrow hidden md:block self-center"><i class="fas fa-times-circle text-red-500"></i></div>
-                 <div class="arrow md:hidden self-center"><i class="fas fa-arrow-down"></i> <i class="fas fa-times-circle text-red-500 ml-1"></i></div>
-                <div class="text-center">
-                    <p class="font-medium text-gray-700">Original Password:</p>
-                    <div class="code-block bg-red-100 text-red-700">Cannot be retrieved!</div>
+                <div id="etaStep2" class="step-container step-hidden">
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+                        <i class="fas fa-stopwatch icon text-green-500"></i>2. ETA by Shortest Path
+                    </h2>
+                    <p class="text-gray-600 mb-2">The Estimated Time of Arrival (ETA) is typically calculated by finding the "shortest path" between your start and end points in this graph.</p>
+                    <p class="text-gray-600 mb-2">"Shortest" usually means the path with the minimum total travel time. Edge weights represent the time to traverse a road segment.</p>
+                    <div id="graphDiv2" class="graph-container"></div>
+                    <div class="text-center mt-2">
+                        <button id="findPathBtn" class="action-button bg-amber-500 hover:bg-amber-600">
+                            <i class="fas fa-route"></i> Show Shortest Path (A to D)
+                        </button>
+                    </div>
+                    <div class="explanation-box">
+                        <p><i class="fas fa-calculator text-green-600"></i> Algorithms like Dijkstra's or A* are commonly used to find these shortest paths. The sum of weights along the chosen path gives the ETA.</p>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="etaDemoShowStep('etaStep1')" class="action-button back-button w-full-mobile">
+                            <i class="fas fa-angle-left mr-2"></i> Back: Map as Graph
+                        </button>
+                        <button onclick="etaDemoShowStep('etaStep3')" class="action-button nav-button w-full-mobile">
+                            Next: Scalability Issues <i class="fas fa-angle-right ml-2"></i>
+                        </button>
+                    </div>
                 </div>
-            </div>
-            <div class="explanation-box">
-                <p><i class="fas fa-shield-alt text-green-500"></i> The one-way hash function prevents retrieval of the password from a fingerprint. This is a key security feature.</p>
-            </div>
-            <div class="button-container">
-                <button onclick="showStep('step1')" class="action-button back-button w-full-mobile">
-                    <i class="fas fa-angle-left mr-2"></i> Back: Hashing & Storing
-                </button>
-                <button onclick="showStep('step3Nav')" class="action-button nav-button w-full-mobile">
-                    Next: Login Process <i class="fas fa-angle-right ml-2"></i>
-                </button>
-            </div>
+                <div id="etaStep3" class="step-container step-hidden">
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+                        <i class="fas fa-exclamation-triangle icon text-red-500"></i>3. Scalability Challenges
+                    </h2>
+                    <p class="text-gray-600 mb-2">Real-world road networks are massive, with millions of nodes and edges. Running standard shortest path algorithms (like Dijkstra's) directly on the entire graph for every request can be too slow.</p>
+                    <p class="text-gray-600">Dijkstra's algorithm has a time complexity of roughly <code class="code-block !inline-block !p-1 !my-0">O(E log V)</code> or <code class="code-block !inline-block !p-1 !my-0">O(V log V + E)</code> with a priority queue, where V is vertices (nodes) and E is edges. For a continental-scale map, this is computationally expensive for real-time queries.</p>
+                    <div class="explanation-box">
+                        <p><i class="fas fa-tachometer-alt text-red-600"></i> While effective for smaller graphs, the sheer scale of global road networks necessitates more advanced techniques to provide fast ETAs for millions of users simultaneously.</p>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="etaDemoShowStep('etaStep2')" class="action-button back-button w-full-mobile">
+                            <i class="fas fa-angle-left mr-2"></i> Back: Shortest Path
+                        </button>
+                        <button onclick="etaDemoShowStep('etaStep4')" class="action-button nav-button w-full-mobile">
+                            Next: Graph Partitioning <i class="fas fa-angle-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="etaStep4" class="step-container step-hidden">
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+                        <i class="fas fa-puzzle-piece icon text-purple-500"></i>4. Graph Partitioning & Precomputation
+                    </h2>
+                    <p class="text-gray-600 mb-2">To manage complexity, the graph is often partitioned into smaller regions or cells. Paths within these partitions, or between important "transit" nodes connecting partitions, can be precomputed.</p>
+                    <div id="graphDiv3" class="graph-container"></div>
+                    <div class="explanation-box">
+                        <p><i class="fas fa-cogs text-purple-600"></i> Precomputation involves calculating and storing shortest paths for many pairs of nodes, especially within partitions or between boundary nodes of partitions. This shifts some computational load from query time to an offline process.</p>
+                        <p class="mt-1"><i class="fas fa-road text-purple-600"></i> Techniques like Contraction Hierarchies or Hub Labeling build upon these ideas, creating shortcuts or overlay graphs to speed up queries significantly.</p>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="etaDemoShowStep('etaStep3')" class="action-button back-button w-full-mobile">
+                            <i class="fas fa-angle-left mr-2"></i> Back: Scalability
+                        </button>
+                        <button onclick="etaDemoShowStep('etaStep5')" class="action-button nav-button w-full-mobile">
+                            Next: Complexity Reduction <i class="fas fa-angle-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="etaStep5" class="step-container step-hidden">
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+                        <i class="fas fa-chart-line icon text-indigo-500"></i>5. Time Complexity Reduction
+                    </h2>
+                    <p class="text-gray-600 mb-2">By partitioning and precomputing, the search space for a given query is dramatically reduced. Instead of searching the entire global graph, the algorithm might only need to consider paths through a few relevant partitions and precomputed shortcuts.</p>
+                    <p class="text-gray-600">While the user's statement "O(n^2) to O(n)" is a simplification, the goal of partitioning and precomputation techniques (like Contraction Hierarchies, Transit Node Routing, Hub Labeling) is to achieve query times that are significantly faster than running Dijkstra on the full graph, often sub-linear or near-constant for many queries after extensive preprocessing.</p>
+                    <div class="explanation-box">
+                        <p><i class="fas fa-stopwatch-20 text-indigo-600"></i> The preprocessing step can be very time-consuming (e.g., hours or days), but it's done offline. The payoff is extremely fast query times (e.g., milliseconds) when a user requests an ETA.</p>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="etaDemoShowStep('etaStep4')" class="action-button back-button w-full-mobile">
+                            <i class="fas fa-angle-left mr-2"></i> Back: Partitioning
+                        </button>
+                        <button onclick="etaDemoShowStep('etaStep6')" class="action-button nav-button w-full-mobile">
+                            Next: Traffic Info <i class="fas fa-angle-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="etaStep6" class="step-container step-hidden">
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+                        <i class="fas fa-traffic-light icon text-orange-500"></i>6. Incorporating Traffic Information
+                    </h2>
+                    <p class="text-gray-600 mb-2">Accurate ETAs depend on real-time traffic conditions. This means the weights of edges in the graph must be dynamic.</p>
+                    <div id="graphDiv4" class="graph-container"></div>
+                    <div class="text-center mt-2">
+                        <button id="toggleTrafficBtn" class="action-button bg-orange-500 hover:bg-orange-600">
+                            <i class="fas fa-car-side"></i> Simulate High Traffic (A to B)
+                        </button>
+                    </div>
+                    <div class="explanation-box">
+                        <p><i class="fas fa-history text-orange-600"></i> Traffic data is collected from various sources (e.g., GPS probes from users' phones, road sensors). This data is used to update the travel time (weights) for affected road segments (edges). Shortest path calculations then use these updated weights, potentially rerouting through less congested areas.</p>
+                        <p class="mt-1"><i class="fas fa-sync-alt text-orange-600"></i> Handling dynamic edge weights with highly optimized precomputed structures can be challenging, often requiring hybrid approaches or periodic updates to the precomputed data.</p>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="etaDemoShowStep('etaStep5')" class="action-button back-button w-full-mobile">
+                            <i class="fas fa-angle-left mr-2"></i> Back: Complexity
+                        </button>
+                        <button onclick="etaDemoShowStep('etaStep7')" class="action-button nav-button w-full-mobile">
+                            Next: Map Matching <i class="fas fa-angle-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="etaStep7" class="step-container step-hidden">
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+                        <i class="fas fa-map-pin icon text-teal-500"></i>7. The Need for Map Matching
+                    </h2>
+                    <p class="text-gray-600 mb-2">GPS data from devices isn't perfectly accurate. Raw GPS coordinates might place a vehicle slightly off-road, in a parallel street, or show erratic movements due to signal noise or urban canyons.</p>
+                    <p class="text-gray-600 mb-2"><strong>Map Matching</strong> is the process of aligning a sequence of observed user positions (GPS points) to the road network on the digital map.</p>
+                    <div id="mapMatchingDiv" class="graph-container p-4">
+                        <svg id="mapMatchingSVG" width="100%" height="100%" viewBox="0 0 300 200">
+                            <line x1="20" y1="100" x2="280" y2="100" stroke="#a0aec0" stroke-width="10" stroke-linecap="round"/>
+                            <line x1="150" y1="20" x2="150" y2="180" stroke="#a0aec0" stroke-width="10" stroke-linecap="round"/>
+                            <polyline id="rawGPSPath" points="40,90 90,115 140,95 160,130 190,110 240,120" fill="none" stroke="#ef4444" stroke-width="3" stroke-dasharray="5,5"/>
+                            <circle cx="40" cy="90" r="5" fill="#ef4444"/><circle cx="90" cy="115" r="5" fill="#ef4444"/>
+                            <circle cx="140" cy="95" r="5" fill="#ef4444"/><circle cx="160" cy="130" r="5" fill="#ef4444"/>
+                            <circle cx="190" cy="110" r="5" fill="#ef4444"/><circle cx="240" cy="120" r="5" fill="#ef4444"/>
+                            <polyline id="matchedGPSPath" points="" fill="none" stroke="#10b981" stroke-width="4" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div class="text-center mt-2">
+                        <button id="showMatchedPathBtn" class="action-button bg-teal-500 hover:bg-teal-600">
+                            <i class="fas fa-magnet"></i> Show Matched Path
+                        </button>
+                    </div>
+                    <div class="explanation-box">
+                        <p><i class="fas fa-crosshairs text-teal-600"></i> Accurate map matching is crucial for:
+                            <ul class="list-disc list-inside ml-2">
+                                <li>Determining which road segment a user is actually on.</li>
+                                <li>Providing correct turn-by-turn directions.</li>
+                                <li>Collecting reliable traffic data (attributing speed to the correct road).</li>
+                                <li>Improving ETA accuracy by understanding the true path taken.</li>
+                            </ul>
+                        </p>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="etaDemoShowStep('etaStep6')" class="action-button back-button w-full-mobile">
+                            <i class="fas fa-angle-left mr-2"></i> Back: Traffic Info
+                        </button>
+                        <button onclick="etaDemoShowStep('etaStep8')" class="action-button nav-button w-full-mobile">
+                            Next: Map Matching Algos <i class="fas fa-angle-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="etaStep8" class="step-container step-hidden">
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+                        <i class="fas fa-brain icon text-cyan-500"></i>8. Algorithms for Map Matching
+                    </h2>
+                    <p class="text-gray-600 mb-2">Several algorithms are used for map matching, often considering geometric proximity, topological connectivity of roads, and the history of movements.</p>
+                    <ul class="list-disc list-inside text-gray-600 space-y-1">
+                        <li><strong>Kalman Filter:</strong> A statistical technique that can estimate the true position of a vehicle by considering previous estimates and new (noisy) GPS measurements. It's good for real-time tracking and smoothing trajectories.</li>
+                        <li><strong>Viterbi Algorithm:</strong> Often used with Hidden Markov Models (HMMs). The road segments are "hidden states," and GPS points are "observations." The Viterbi algorithm finds the most likely sequence of road segments (path) given the sequence of GPS points.</li>
+                        <li><strong>Fuzzy Logic and Geometric Heuristics:</strong> Simpler methods might use rules based on distance to road segments, heading direction, and road connectivity.</li>
+                    </ul>
+                    <div class="explanation-box">
+                        <p><i class="fas fa-code-branch text-cyan-600"></i> The choice of algorithm depends on the desired accuracy, computational resources, and whether it's for real-time or post-processing applications. These algorithms help ensure that the system understands the user's actual path on the road network, leading to better ETAs and navigation.</p>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="etaDemoShowStep('etaStep7')" class="action-button back-button w-full-mobile">
+                            <i class="fas fa-angle-left mr-2"></i> Back: Map Matching
+                        </button>
+                        <button onclick="etaDemoRestart()" class="action-button bg-rose-500 hover:bg-rose-600 w-full-mobile">
+                            Restart This Demo <i class="fas fa-redo ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </main>
+            <footer class="text-center mt-12 mb-8">
+                <p class="text-sm text-gray-500">This is a simplified visual demonstration. Real-world ETA systems are highly complex and use sophisticated algorithms and data sources.</p>
+            </footer>
         </div>
-
-        <div id="step3Nav" class="step-container step-hidden">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-4">
-                <i class="fas fa-sign-in-alt icon text-green-500"></i>Step 4 & 5: Login & Verification
-            </h2>
-            <p class="text-gray-600 mb-2">When you try to log in, the system re-hashes the password you enter and compares it to the stored fingerprint.</p>
-            <p class="text-gray-600 mb-4">Try logging in with the password you set in Step 1 (or a different one to see it fail).</p>
-
-            <div class="flex flex-col sm:flex-row items-center gap-4 mb-4">
-                <input type="text" id="loginPasswordInput" class="password-input" placeholder="Enter password to login">
-                <button id="loginButton" class="action-button w-full sm:w-auto">
-                    <i class="fas fa-check"></i> Attempt Login
-                </button>
-            </div>
-
-            <div id="loginAttemptOutput" class="hidden">
-                <p class="font-medium text-gray-700">Password Entered for Login:</p>
-                <div class="code-block" id="loginEnteredPassword"></div>
-                <p class="font-medium text-gray-700 mt-2">Newly Generated Fingerprint:</p>
-                <div class="code-block" id="loginGeneratedFingerprint"></div>
-                <p class="font-medium text-gray-700 mt-2">Stored Fingerprint in Database:</p>
-                <div class="code-block" id="loginStoredFingerprint"></div>
-                <div id="loginResult" class="mt-4 p-3 rounded-md text-center"></div>
-            </div>
-            <div class="explanation-box mt-4">
-                <p><i class="fas fa-redo text-blue-500"></i> The system regenerates the fingerprint whenever the user enters a password during a login attempt.</p>
-                <p><i class="fas fa-equals text-purple-500"></i> The system compares this regenerated fingerprint against the stored value to grant or deny access.</p>
-            </div>
-            <div class="button-container">
-                <button onclick="showStep('step2Nav')" class="action-button back-button w-full-mobile">
-                    <i class="fas fa-angle-left mr-2"></i> Back: One-Way Hashing
-                </button>
-                <button onclick="showStep('step4Nav')" class="action-button nav-button w-full-mobile">
-                    Next: Rainbow Tables <i class="fas fa-angle-right ml-2"></i>
-                </button>
-            </div>
-        </div>
-
-        <div id="step4Nav" class="step-container step-hidden">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-4">
-                <i class="fas fa-table icon text-red-500"></i>Step 6 & 7: The Rainbow Table Threat
-            </h2>
-            <p class="text-gray-600 mb-2">If an attacker gets access to your database of fingerprints, they can use a "rainbow table" – a pre-computed list of passwords and their corresponding hashes – to find the original passwords.</p>
-            
-            <div class="my-4">
-                 <p class="font-medium text-gray-700">Simplified Rainbow Table:</p>
-                <table class="db-table">
-                    <thead><tr><th>Password</th><th>Fingerprint (Hash)</th></tr></thead>
-                    <tbody>
-                        <tr><td>password123</td><td id="rtHash1"></td></tr>
-                        <tr><td>qwerty</td><td id="rtHash2"></td></tr>
-                        <tr><td>admin</td><td id="rtHash3"></td></tr>
-                        <tr><td><span class="highlight" id="rtPasswordMatch">your_password_here</span></td><td class="highlight" id="rtHashMatch"></td></tr>
-                         <tr><td>secret</td><td id="rtHash4"></td></tr>
-                    </tbody>
-                </table>
-            </div>
-            <div id="rainbowAttackResult" class="mt-4 p-3 rounded-md text-center hidden"></div>
-            <div class="explanation-box">
-                <p><i class="fas fa-search text-orange-500"></i> It's possible to find a password from a fingerprint if the hash is in a rainbow table.</p>
-                <p><i class="fas fa-link text-red-500"></i> A rainbow table is a map between pre-computed fingerprints and passwords.</p>
-                <p class="mt-2"><span class="warning"><i class="fas fa-exclamation-triangle"></i> This is a major vulnerability if only plain hashes are stored!</span></p>
-            </div>
-            <div class="button-container">
-                <button onclick="showStep('step3Nav')" class="action-button back-button w-full-mobile">
-                    <i class="fas fa-angle-left mr-2"></i> Back: Login Process
-                </button>
-                <button onclick="showStep('step5Nav')" class="action-button nav-button w-full-mobile">
-                    Next: Introducing Salt <i class="fas fa-angle-right ml-2"></i>
-                </button>
-            </div>
-        </div>
-
-        <div id="step5Nav" class="step-container step-hidden">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-4">
-                <i class="fas fa-pepper-hot icon text-indigo-500"></i>Step 8, 9 & 10: Salting to the Rescue!
-            </h2>
-            <p class="text-gray-600 mb-2">To combat rainbow tables, we use "salt" – a unique random string added to each password <span class="highlight">before</span> hashing.</p>
-
-            <div class="my-4">
-                <p class="font-medium text-gray-700">Password:</p>
-                <div class="code-block" id="saltPassword"></div>
-                <p class="font-medium text-gray-700 mt-2">Generated Salt (unique per user):</p>
-                <div class="code-block"><span id="saltValue" class="salt-value"></span></div>
-                <p class="font-medium text-gray-700 mt-2">Password + Salt:</p>
-                <div class="code-block" id="passwordPlusSalt"></div>
-                <p class="font-medium text-gray-700 mt-2">New Fingerprint (Hash of Password + Salt):</p>
-                <div class="code-block" id="saltedHash"></div>
-            </div>
-
-            <div class="explanation-box">
-                <p><i class="fas fa-random text-purple-500"></i> The system adds salt, a unique random string, to the password to invalidate rainbow table values.</p>
-                <p><i class="fas fa-save text-blue-500"></i> The database stores the salt alongside the (salted) fingerprint.</p>
-            </div>
-
-            <div class="mt-4">
-                 <p class="font-medium text-gray-700 mb-2">Simulated Database (with Salt):</p>
-                <table class="db-table">
-                    <thead><tr><th>Username</th><th>Salt</th><th>Password Fingerprint (Salted)</th></tr></thead>
-                    <tbody id="dbTableSalted">
-                        <tr><td>user123</td><td id="dbSalt">---</td><td id="dbSaltedFingerprint">---</td></tr>
-                    </tbody>
-                </table>
-            </div>
-            
-            <p class="text-gray-600 mt-6 mb-2">Now, if an attacker tries the rainbow table against the <span class="highlight">salted hash</span>...</p>
-            <div id="rainbowAttackSaltedResult" class="mt-1 p-3 rounded-md text-center">
-                The rainbow table (which contains hashes of unsalted passwords) <span class="warning">will not find a match</span> for the salted hash!
-            </div>
-
-            <div class="explanation-box mt-4">
-                 <p><i class="fas fa-sync-alt text-green-500"></i> During login, the server retrieves the user's salt, combines it with the entered password, hashes the result, and then compares it to the stored salted fingerprint.</p>
-                 <p class="mt-2"><span class="success"><i class="fas fa-shield-check"></i> Salting significantly improves password security by making rainbow table attacks impractical!</span></p>
-            </div>
-            <div class="button-container">
-                <button onclick="showStep('step4Nav')" class="action-button back-button w-full-mobile">
-                    <i class="fas fa-angle-left mr-2"></i> Back: Rainbow Tables
-                </button>
-                <button onclick="restartDemo()" class="action-button bg-red-500 hover:bg-red-600 w-full-mobile">
-                    Restart Demo <i class="fas fa-redo ml-2"></i>
-                </button>
-            </div>
-        </div>
-    </main>
-
-    <footer class="text-center mt-12 mb-8">
-        <p class="text-sm text-gray-500">This is a simplified visual demonstration. Real-world hashing algorithms (e.g., bcrypt, Argon2) are more complex and secure.</p>
-    </footer>
+    </div>
 
     <script>
-        // --- Global State ---
-        let originalPassword = "";
-        let currentHash = "";
-        let currentSalt = "";
-        let currentSaltedHash = "";
+        // --- Main Navigation Control ---
+        const outerPageIds = ['learnSystemDesignPage', 'interactiveSystemDesignHubContent'];
+        const hubPageIds = ['hubLandingPageSection', 'passwordDemoSection', 'etaDemoSection'];
 
-        // --- DOM Elements (Copied from previous version, no changes needed here) ---
+        function showOuterPage(pageIdToShow) {
+            outerPageIds.forEach(pageId => {
+                const el = document.getElementById(pageId);
+                if (el) el.style.display = (pageId === pageIdToShow) ? 'block' : 'none';
+            });
+            window.scrollTo(0,0);
+            if (pageIdToShow === 'interactiveSystemDesignHubContent') {
+                showHubPage('hubLandingPageSection'); // Show hub's own landing page first
+            }
+        }
+
+        function showHubPage(pageIdToShow) {
+            hubPageIds.forEach(pageId => {
+                const el = document.getElementById(pageId);
+                if (el) el.style.display = (pageId === pageIdToShow) ? 'block' : 'none';
+            });
+            window.scrollTo(0,0);
+
+            if (pageIdToShow === 'passwordDemoSection') passwordDemoInit();
+            else if (pageIdToShow === 'etaDemoSection') etaDemoInit();
+        }
+
+        // --- Password Security Demo JS (Adapted) ---
+        let originalPassword = ""; let currentHash = ""; let currentSalt = ""; let currentSaltedHash = "";
         const passwordInput1 = document.getElementById('passwordInput1');
         const hashButton = document.getElementById('hashButton');
         const step1Output = document.getElementById('step1Output');
         const originalPassword1El = document.getElementById('originalPassword1');
         const hashedPassword1El = document.getElementById('hashedPassword1');
         const dbFingerprint1El = document.getElementById('dbFingerprint1');
-        
         const hashedPassword2El = document.getElementById('hashedPassword2');
-
         const loginPasswordInput = document.getElementById('loginPasswordInput');
         const loginButton = document.getElementById('loginButton');
         const loginAttemptOutput = document.getElementById('loginAttemptOutput');
@@ -389,189 +702,105 @@
         const loginGeneratedFingerprintEl = document.getElementById('loginGeneratedFingerprint');
         const loginStoredFingerprintEl = document.getElementById('loginStoredFingerprint');
         const loginResultEl = document.getElementById('loginResult');
-
-        const rtHash1El = document.getElementById('rtHash1');
-        const rtHash2El = document.getElementById('rtHash2');
-        const rtHash3El = document.getElementById('rtHash3');
-        const rtHash4El = document.getElementById('rtHash4');
-        const rtPasswordMatchEl = document.getElementById('rtPasswordMatch');
-        const rtHashMatchEl = document.getElementById('rtHashMatch');
+        const rtHash1El = document.getElementById('rtHash1'); const rtHash2El = document.getElementById('rtHash2');
+        const rtHash3El = document.getElementById('rtHash3'); const rtHash4El = document.getElementById('rtHash4');
+        const rtPasswordMatchEl = document.getElementById('rtPasswordMatch'); const rtHashMatchEl = document.getElementById('rtHashMatch');
         const rainbowAttackResultEl = document.getElementById('rainbowAttackResult');
-
-        const saltPasswordEl = document.getElementById('saltPassword');
-        const saltValueEl = document.getElementById('saltValue');
-        const passwordPlusSaltEl = document.getElementById('passwordPlusSalt');
-        const saltedHashEl = document.getElementById('saltedHash');
-        const dbSaltEl = document.getElementById('dbSalt');
-        const dbSaltedFingerprintEl = document.getElementById('dbSaltedFingerprint');
+        const saltPasswordEl = document.getElementById('saltPassword'); const saltValueEl = document.getElementById('saltValue');
+        const passwordPlusSaltEl = document.getElementById('passwordPlusSalt'); const saltedHashEl = document.getElementById('saltedHash');
+        const dbSaltEl = document.getElementById('dbSalt'); const dbSaltedFingerprintEl = document.getElementById('dbSaltedFingerprint');
         const rainbowAttackSaltedResultEl = document.getElementById('rainbowAttackSaltedResult');
 
-        // --- Helper Functions ---
-        // Simplified "hash" function for demonstration. NOT for real security.
-        function simpleHash(str) {
-            if (!str) return "empty_hash_value";
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) {
-                const char = str.charCodeAt(i);
-                hash = ((hash << 5) - hash) + char;
-                hash |= 0; // Convert to 32bit integer
-            }
-            // Make it look more like a typical hash output (hex-like)
+        function passwordDemoSimpleHash(str) {
+            if (!str) return "empty_hash_value"; let hash = 0;
+            for (let i = 0; i < str.length; i++) { const char = str.charCodeAt(i); hash = ((hash << 5) - hash) + char; hash |= 0; }
             return 'sim_hash_' + Math.abs(hash).toString(16).padStart(8, '0') + '_' + str.length;
         }
+        function passwordDemoGenerateSalt() { return 'salt_' + Math.random().toString(36).substring(2, 10); }
 
-        function generateSalt() {
-            return 'salt_' + Math.random().toString(36).substring(2, 10);
-        }
-
-        // Function to show a specific step and hide others
-        function showStep(stepId) {
-            // Hide all step containers
-            document.querySelectorAll('.step-container').forEach(container => {
-                container.classList.remove('step-visible');
-                container.classList.add('step-hidden');
+        function passwordDemoShowStep(stepId) {
+            const parent = document.getElementById('passwordDemoSection');
+            parent.querySelectorAll('.step-container').forEach(container => {
+                container.classList.remove('step-visible'); container.classList.add('step-hidden');
             });
-            // Show the target step container
-            const currentStep = document.getElementById(stepId);
-            if (currentStep) {
-                currentStep.classList.remove('step-hidden');
-                currentStep.classList.add('step-visible');
-                // Scroll to the top of the step for better visibility
-                currentStep.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-            // Update dynamic content based on the current step
-            updateStepContent(stepId);
+            const currentStep = parent.querySelector('#' + stepId);
+            if (currentStep) { currentStep.classList.remove('step-hidden'); currentStep.classList.add('step-visible');}
+            passwordDemoUpdateStepContent(stepId);
         }
         
-        // Function to update the content of a step when it's shown
-        function updateStepContent(stepId) {
-            // Logic for Step 3: One-Way Hashing
-            if (stepId === 'step2Nav') { 
-                hashedPassword2El.textContent = currentHash || "No hash generated yet.";
-            } 
-            // Logic for Step 4 & 5: Login Process
+        function passwordDemoUpdateStepContent(stepId) {
+            if (stepId === 'step2Nav') { hashedPassword2El.textContent = currentHash || "No hash generated yet."; }
             else if (stepId === 'step3Nav') { 
                 loginStoredFingerprintEl.textContent = currentHash || "No hash stored yet.";
-                loginAttemptOutput.classList.add('hidden'); // Reset login attempt view
-                loginPasswordInput.value = ""; // Clear login input
-            } 
-            // Logic for Step 6 & 7: Rainbow Table
-            else if (stepId === 'step4Nav') { 
-                // Populate rainbow table with example hashes
-                rtHash1El.textContent = simpleHash("password123");
-                rtHash2El.textContent = simpleHash("qwerty");
-                rtHash3El.textContent = simpleHash("admin");
-                rtHash4El.textContent = simpleHash("secret");
-
-                // If a password was set in Step 1, show how it would appear in a rainbow table
+                loginAttemptOutput.classList.add('hidden'); loginPasswordInput.value = "";
+            } else if (stepId === 'step4Nav') { 
+                rtHash1El.textContent = passwordDemoSimpleHash("password123"); rtHash2El.textContent = passwordDemoSimpleHash("qwerty");
+                rtHash3El.textContent = passwordDemoSimpleHash("admin"); rtHash4El.textContent = passwordDemoSimpleHash("secret");
                 if (originalPassword && currentHash) {
-                    rtPasswordMatchEl.textContent = originalPassword;
-                    rtHashMatchEl.textContent = currentHash;
-                    // Highlight the matching row
+                    rtPasswordMatchEl.textContent = originalPassword; rtHashMatchEl.textContent = currentHash;
                     rtHashMatchEl.classList.add('bg-yellow-100', 'text-yellow-700', 'p-1', 'rounded');
                     rtPasswordMatchEl.classList.add('bg-yellow-100', 'text-yellow-700', 'p-1', 'rounded');
                     rainbowAttackResultEl.innerHTML = `An attacker with the database fingerprint (<span class="code-block !inline-block !p-1 !my-0">${currentHash}</span>) can look it up in their rainbow table and find your password: <span class="warning">${originalPassword}</span>!`;
                     rainbowAttackResultEl.classList.remove('hidden');
                 } else {
-                    // Default placeholder if no password set yet
-                    rtPasswordMatchEl.textContent = "your_password_here";
-                    rtHashMatchEl.textContent = "corresponding_hash";
-                     rtHashMatchEl.classList.remove('bg-yellow-100', 'text-yellow-700', 'p-1', 'rounded'); // Ensure highlighting is removed
+                    rtPasswordMatchEl.textContent = "your_password_here"; rtHashMatchEl.textContent = "corresponding_hash";
+                    rtHashMatchEl.classList.remove('bg-yellow-100', 'text-yellow-700', 'p-1', 'rounded');
                     rtPasswordMatchEl.classList.remove('bg-yellow-100', 'text-yellow-700', 'p-1', 'rounded');
                     rainbowAttackResultEl.textContent = "First, set a password in Step 1 to see the rainbow table attack.";
                     rainbowAttackResultEl.classList.remove('hidden');
                 }
-            } 
-            // Logic for Step 8, 9 & 10: Salting
-            else if (stepId === 'step5Nav') { 
+            } else if (stepId === 'step5Nav') { 
                 if (originalPassword) {
-                    // Generate a new salt and salted hash if not already done for this session
                     if (!currentSalt || !currentSaltedHash || saltPasswordEl.textContent !== originalPassword) {
-                        currentSalt = generateSalt();
-                        currentSaltedHash = simpleHash(originalPassword + currentSalt);
+                        currentSalt = passwordDemoGenerateSalt(); currentSaltedHash = passwordDemoSimpleHash(originalPassword + currentSalt);
                     }
-                    
-                    // Display password, salt, and salted hash information
-                    saltPasswordEl.textContent = originalPassword;
-                    saltValueEl.textContent = currentSalt;
-                    passwordPlusSaltEl.textContent = originalPassword + " + " + currentSalt; // Show concatenation
-                    saltedHashEl.textContent = currentSaltedHash;
-                    
-                    // Update simulated database with salt
-                    dbSaltEl.textContent = currentSalt;
-                    dbSaltedFingerprintEl.textContent = currentSaltedHash;
-
-                    // Check if the salted hash would be found in the simplified rainbow table
+                    saltPasswordEl.textContent = originalPassword; saltValueEl.textContent = currentSalt;
+                    passwordPlusSaltEl.textContent = originalPassword + " + " + currentSalt; saltedHashEl.textContent = currentSaltedHash;
+                    dbSaltEl.textContent = currentSalt; dbSaltedFingerprintEl.textContent = currentSaltedHash;
                     const rainbowHashes = [rtHash1El.textContent, rtHash2El.textContent, rtHash3El.textContent, rtHashMatchEl.textContent, rtHash4El.textContent];
                     if (rainbowHashes.includes(currentSaltedHash)) {
                          rainbowAttackSaltedResultEl.innerHTML = `The salted hash (<span class="code-block !inline-block !p-1 !my-0">${currentSaltedHash}</span>) <span class="warning">was found</span> in the (simplified) rainbow table. This is highly unlikely with real-world salts and secure hash functions!`;
                     } else {
                          rainbowAttackSaltedResultEl.innerHTML = `The salted hash (<span class="code-block !inline-block !p-1 !my-0">${currentSaltedHash}</span>) is <span class="success">NOT found</span> in the rainbow table of unsalted password hashes!`;
                     }
-
                 } else {
-                     // Default placeholders if no password set yet
-                     saltPasswordEl.textContent = "Set password in Step 1";
-                     saltValueEl.textContent = "---";
-                     passwordPlusSaltEl.textContent = "---";
-                     saltedHashEl.textContent = "---";
-                     dbSaltEl.textContent = "---";
-                     dbSaltedFingerprintEl.textContent = "---";
+                     saltPasswordEl.textContent = "Set password in Step 1"; saltValueEl.textContent = "---"; passwordPlusSaltEl.textContent = "---"; saltedHashEl.textContent = "---";
+                     dbSaltEl.textContent = "---"; dbSaltedFingerprintEl.textContent = "---";
                      rainbowAttackSaltedResultEl.textContent = "First, set a password in Step 1 to see salting in action.";
                 }
             }
         }
 
-        // --- Event Listeners ---
-        // Event listener for the "Hash & Store" button in Step 1
-        hashButton.addEventListener('click', () => {
+        hashButton?.addEventListener('click', () => {
             originalPassword = passwordInput1.value;
+            const msgContainer = passwordInput1.parentNode;
+            msgContainer.querySelector('.temp-msg')?.remove();
             if (!originalPassword) {
-                // In-page message instead of alert
-                const tempMsg = document.createElement('p');
-                tempMsg.textContent = "Please enter a password.";
-                tempMsg.className = "text-red-500 text-sm mb-2";
-                passwordInput1.parentNode.insertBefore(tempMsg, passwordInput1.nextSibling);
-                setTimeout(() => tempMsg.remove(), 3000);
-                return;
+                const tempMsg = document.createElement('p'); tempMsg.textContent = "Please enter a password.";
+                tempMsg.className = "text-red-500 text-sm mb-2 temp-msg";
+                msgContainer.insertBefore(tempMsg, passwordInput1.nextSibling); setTimeout(() => tempMsg.remove(), 3000); return;
             }
-            currentHash = simpleHash(originalPassword);
-            currentSalt = ""; // Reset salt when a new password is set
-            currentSaltedHash = ""; // Reset salted hash
-
-            originalPassword1El.textContent = originalPassword;
-            hashedPassword1El.textContent = currentHash;
-            dbFingerprint1El.textContent = currentHash; // Update simulated DB
-            
-            step1Output.classList.remove('hidden'); // Show the output section for Step 1
+            currentHash = passwordDemoSimpleHash(originalPassword); currentSalt = ""; currentSaltedHash = "";
+            originalPassword1El.textContent = originalPassword; hashedPassword1El.textContent = currentHash;
+            dbFingerprint1El.textContent = currentHash; step1Output.classList.remove('hidden');
         });
 
-        // Event listener for the "Attempt Login" button in Step 4 & 5
-        loginButton.addEventListener('click', () => {
-            const enteredPassword = loginPasswordInput.value;
+        loginButton?.addEventListener('click', () => {
+            const enteredPassword = loginPasswordInput.value; const msgContainer = loginPasswordInput.parentNode;
+            msgContainer.querySelector('.temp-msg')?.remove();
             if (!enteredPassword) {
-                 const tempMsg = document.createElement('p');
-                tempMsg.textContent = "Please enter a password to attempt login.";
-                tempMsg.className = "text-red-500 text-sm mb-2";
-                loginPasswordInput.parentNode.insertBefore(tempMsg, loginPasswordInput.nextSibling);
-                setTimeout(() => tempMsg.remove(), 3000);
-                return;
+                const tempMsg = document.createElement('p'); tempMsg.textContent = "Please enter a password to attempt login.";
+                tempMsg.className = "text-red-500 text-sm mb-2 temp-msg";
+                msgContainer.insertBefore(tempMsg, loginPasswordInput.nextSibling); setTimeout(() => tempMsg.remove(), 3000); return;
             }
-            if (!currentHash) { // Check if a hash was generated in Step 1
-                const tempMsg = document.createElement('p');
-                tempMsg.textContent = "Please complete Step 1 (Hashing & Storing) first.";
-                tempMsg.className = "text-red-500 text-sm mb-2";
-                loginPasswordInput.parentNode.insertBefore(tempMsg, loginPasswordInput.nextSibling);
-                setTimeout(() => tempMsg.remove(), 3000);
-                return;
+            if (!currentHash) {
+                const tempMsg = document.createElement('p'); tempMsg.textContent = "Please complete Step 1 (Hashing & Storing) first.";
+                tempMsg.className = "text-red-500 text-sm mb-2 temp-msg";
+                msgContainer.insertBefore(tempMsg, loginPasswordInput.nextSibling); setTimeout(() => tempMsg.remove(), 3000); return;
             }
-
-            const newlyGeneratedHash = simpleHash(enteredPassword);
-            loginEnteredPasswordEl.textContent = enteredPassword;
-            loginGeneratedFingerprintEl.textContent = newlyGeneratedHash;
-            loginStoredFingerprintEl.textContent = currentHash; // Show the stored hash for comparison
-
-            // Compare newly generated hash with the stored hash
+            const newlyGeneratedHash = passwordDemoSimpleHash(enteredPassword);
+            loginEnteredPasswordEl.textContent = enteredPassword; loginGeneratedFingerprintEl.textContent = newlyGeneratedHash;
+            loginStoredFingerprintEl.textContent = currentHash;
             if (newlyGeneratedHash === currentHash) {
                 loginResultEl.innerHTML = `<i class="fas fa-check-circle icon success"></i> <span class="success">Access Granted!</span> The fingerprints match.`;
                 loginResultEl.className = 'mt-4 p-3 rounded-md text-center bg-green-100 text-green-700';
@@ -579,63 +808,151 @@
                 loginResultEl.innerHTML = `<i class="fas fa-times-circle icon warning"></i> <span class="warning">Access Denied!</span> The fingerprints do not match.`;
                 loginResultEl.className = 'mt-4 p-3 rounded-md text-center bg-red-100 text-red-700';
             }
-            loginAttemptOutput.classList.remove('hidden'); // Show the login attempt results
+            loginAttemptOutput.classList.remove('hidden');
         });
         
-        // Function to restart the demonstration
-        function restartDemo() {
-            // Reset global state variables
-            originalPassword = "";
-            currentHash = "";
-            currentSalt = "";
-            currentSaltedHash = "";
-
-            // Clear input fields
-            passwordInput1.value = "";
-            loginPasswordInput.value = "";
-
-            // Hide output sections
-            step1Output.classList.add('hidden');
-            loginAttemptOutput.classList.add('hidden');
-            
-            // Reset text content of display elements in Step 1
-            originalPassword1El.textContent = "";
-            hashedPassword1El.textContent = "";
-            dbFingerprint1El.textContent = "---";
-            
-            // Reset text content for Step 3
-            hashedPassword2El.textContent = "No hash generated yet.";
-            
-            // Reset text content for Step 4 & 5
-            loginStoredFingerprintEl.textContent = "No hash stored yet.";
-            loginResultEl.textContent = "";
-            loginResultEl.className = 'mt-4 p-3 rounded-md text-center'; // Reset result style
-
-            // Reset rainbow table display in Step 6 & 7
-            rtPasswordMatchEl.textContent = "your_password_here";
-            rtHashMatchEl.textContent = "corresponding_hash";
-            rtHashMatchEl.classList.remove('bg-yellow-100', 'text-yellow-700', 'p-1', 'rounded');
-            rtPasswordMatchEl.classList.remove('bg-yellow-100', 'text-yellow-700', 'p-1', 'rounded');
-            rainbowAttackResultEl.textContent = "First, set a password in Step 1 to see the rainbow table attack.";
-            rainbowAttackResultEl.classList.add('hidden');
-            
-            // Reset salting display in Step 8, 9 & 10
-            saltPasswordEl.textContent = "Set password in Step 1";
-            saltValueEl.textContent = "---";
-            passwordPlusSaltEl.textContent = "---";
-            saltedHashEl.textContent = "---";
-            dbSaltEl.textContent = "---";
-            dbSaltedFingerprintEl.textContent = "---";
-            rainbowAttackSaltedResultEl.textContent = "First, set a password in Step 1 to see salting in action.";
-
-            showStep('step1'); // Navigate back to the first step
+        function passwordDemoRestart(initialStepId = 'step1') {
+            originalPassword = ""; currentHash = ""; currentSalt = ""; currentSaltedHash = "";
+            if(passwordInput1) passwordInput1.value = ""; if(loginPasswordInput) loginPasswordInput.value = "";
+            if(step1Output) step1Output.classList.add('hidden'); if(loginAttemptOutput) loginAttemptOutput.classList.add('hidden');
+            if(originalPassword1El) originalPassword1El.textContent = ""; if(hashedPassword1El) hashedPassword1El.textContent = ""; if(dbFingerprint1El) dbFingerprint1El.textContent = "---";
+            if(hashedPassword2El) hashedPassword2El.textContent = "No hash generated yet.";
+            if(loginStoredFingerprintEl) loginStoredFingerprintEl.textContent = "No hash stored yet."; if(loginResultEl) loginResultEl.textContent = "";
+            if(loginResultEl) loginResultEl.className = 'mt-4 p-3 rounded-md text-center';
+            if(rtPasswordMatchEl) rtPasswordMatchEl.textContent = "your_password_here"; if(rtHashMatchEl) rtHashMatchEl.textContent = "corresponding_hash";
+            if(rtHashMatchEl) rtHashMatchEl.classList.remove('bg-yellow-100', 'text-yellow-700', 'p-1', 'rounded');
+            if(rtPasswordMatchEl) rtPasswordMatchEl.classList.remove('bg-yellow-100', 'text-yellow-700', 'p-1', 'rounded');
+            if(rainbowAttackResultEl) rainbowAttackResultEl.textContent = "First, set a password in Step 1 to see the rainbow table attack.";
+            if(rainbowAttackResultEl) rainbowAttackResultEl.classList.add('hidden');
+            if(saltPasswordEl) saltPasswordEl.textContent = "Set password in Step 1"; if(saltValueEl) saltValueEl.textContent = "---";
+            if(passwordPlusSaltEl) passwordPlusSaltEl.textContent = "---"; if(saltedHashEl) saltedHashEl.textContent = "---";
+            if(dbSaltEl) dbSaltEl.textContent = "---"; if(dbSaltedFingerprintEl) dbSaltedFingerprintEl.textContent = "---";
+            if(rainbowAttackSaltedResultEl) rainbowAttackSaltedResultEl.textContent = "First, set a password in Step 1 to see salting in action.";
+            passwordDemoShowStep(initialStepId);
         }
+        function passwordDemoInit() { passwordDemoRestart('step1'); }
 
-        // Initialize the first step when the page loads
-        window.onload = () => {
-            // updateStepContent('step1'); // Call if step1 has dynamic content to load initially
-        };
+        // --- ETA Computation Demo JS (Adapted) ---
+        const etaNodes = { A: { x: 50, y: 50, label: 'A' }, B: { x: 200, y: 50, label: 'B' }, C: { x: 50, y: 150, label: 'C' }, D: { x: 200, y: 150, label: 'D' }, E: { x: 350, y: 100, label: 'E' } };
+        const etaEdges = [ { from: 'A', to: 'B', weight: 10, id: 'AB' }, { from: 'A', to: 'C', weight: 5, id: 'AC' }, { from: 'B', to: 'D', weight: 8, id: 'BD' }, { from: 'C', to: 'D', weight: 6, id: 'CD' }, { from: 'B', to: 'E', weight: 12, id: 'BE' }, { from: 'D', to: 'E', weight: 7, id: 'DE' } ];
+        let etaCurrentTrafficEdgeWeight = 10;
 
+        function etaDemoCreateNodeElement(node, id) {
+            const el = document.createElement('div'); el.classList.add('node'); el.id = `node-${id}-${node.label}`;
+            el.style.left = `${node.x}px`; el.style.top = `${node.y}px`; el.textContent = node.label; return el;
+        }
+        function etaDemoCreateEdgeElement(edge, nodeData, graphId, isTrafficDemo = false) {
+            const fromNode = nodeData[edge.from]; const toNode = nodeData[edge.to]; const el = document.createElement('div');
+            el.classList.add('edge'); el.id = `edge-${graphId}-${edge.id}`;
+            const dx = toNode.x - fromNode.x; const dy = toNode.y - fromNode.y;
+            const length = Math.sqrt(dx * dx + dy * dy); const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+            el.style.width = `${length}px`; el.style.left = `${fromNode.x + 20}px`; el.style.top = `${fromNode.y + 20}px`; el.style.transform = `rotate(${angle}deg)`;
+            const label = document.createElement('span'); label.classList.add('edge-label'); label.id = `label-${graphId}-${edge.id}`;
+            label.textContent = (isTrafficDemo && edge.id === 'AB') ? etaCurrentTrafficEdgeWeight : edge.weight;
+            label.style.transform = `rotate(${-angle}deg) translateX(-50%)`; label.style.position = 'absolute'; label.style.left = '50%';
+            if (angle > -90 && angle < 90) { label.style.bottom = '8px'; } else { label.style.top = '8px';}
+            el.appendChild(label); return el;
+        }
+        function etaDemoDrawGraph(containerId, nodeData, edgeData, highlightPath = [], isTrafficDemo = false) {
+            const container = document.getElementById(containerId); if (!container) return; container.innerHTML = ''; 
+            edgeData.forEach(edge => {
+                const edgeEl = etaDemoCreateEdgeElement(edge, nodeData, containerId, isTrafficDemo);
+                if (highlightPath.includes(edge.id) || highlightPath.includes(edge.to + edge.from)) {
+                    edgeEl.style.backgroundColor = '#fbbf24'; edgeEl.style.height = '6px';
+                } container.appendChild(edgeEl);
+            });
+            Object.values(nodeData).forEach(node => {
+                const nodeEl = etaDemoCreateNodeElement(node, containerId); let isOnPath = false;
+                if (highlightPath.length > 0) {
+                    if (node.label === 'A' && (highlightPath.includes('AC') || highlightPath.includes('AB'))) isOnPath = true;
+                    else if (node.label === 'D' && (highlightPath.includes('CD') || highlightPath.includes('BD'))) isOnPath = true;
+                    else if (node.label === 'C' && highlightPath.includes('AC') && highlightPath.includes('CD')) isOnPath = true;
+                    else if (node.label === 'B' && highlightPath.includes('AB') && highlightPath.includes('BD')) isOnPath = true;
+                } if (isOnPath) nodeEl.classList.add('highlight-path'); container.appendChild(nodeEl);
+            });
+        }
+        function etaDemoDrawPartitions(containerId) {
+            const container = document.getElementById(containerId); if (!container) return;
+            const p1 = document.createElement('div'); p1.classList.add('partition'); p1.style.left = '30px'; p1.style.top = '30px';
+            p1.style.width = '100px'; p1.style.height = '150px'; p1.style.borderColor = '#a855f7'; container.appendChild(p1);
+            const p1Label = document.createElement('span'); p1Label.textContent = "P1"; p1Label.className = "absolute -top-5 left-1 text-purple-600 font-bold"; p1.appendChild(p1Label);
+            const p2 = document.createElement('div'); p2.classList.add('partition'); p2.style.left = '180px'; p2.style.top = '30px';
+            p2.style.width = '200px'; p2.style.height = '150px'; p2.style.borderColor = '#ec4899'; container.appendChild(p2);
+            const p2Label = document.createElement('span'); p2Label.textContent = "P2"; p2Label.className = "absolute -top-5 left-1 text-pink-600 font-bold"; p2.appendChild(p2Label);
+        }
+        const etaStepIds = ['etaStep1', 'etaStep2', 'etaStep3', 'etaStep4', 'etaStep5', 'etaStep6', 'etaStep7', 'etaStep8'];
+        function etaDemoShowStep(stepId) {
+            const parent = document.getElementById('etaDemoSection');
+            etaStepIds.forEach(id => {
+                const el = parent.querySelector('#' + id);
+                if (el) { if (id === stepId) { el.classList.remove('step-hidden'); el.classList.add('step-visible'); } 
+                         else { el.classList.remove('step-visible'); el.classList.add('step-hidden'); }
+                }
+            }); etaDemoUpdateStepContent(stepId);
+        }
+        function etaDemoUpdateStepContent(stepId) {
+            if (stepId === 'etaStep1') { etaDemoDrawGraph('graphDiv1', etaNodes, etaEdges); } 
+            else if (stepId === 'etaStep2') { etaDemoDrawGraph('graphDiv2', etaNodes, etaEdges); } 
+            else if (stepId === 'etaStep4') { etaDemoDrawGraph('graphDiv3', etaNodes, etaEdges); etaDemoDrawPartitions('graphDiv3'); } 
+            else if (stepId === 'etaStep6') { etaDemoDrawGraph('graphDiv4', etaNodes, etaEdges, [], true); } 
+            else if (stepId === 'etaStep7') { const matchedPath = document.getElementById('matchedGPSPath'); if(matchedPath) matchedPath.setAttribute('points', ''); }
+        }
+        document.getElementById('findPathBtn')?.addEventListener('click', () => {
+            const shortestPathEdges = ['AC', 'CD']; etaDemoDrawGraph('graphDiv2', etaNodes, etaEdges, shortestPathEdges);
+            document.querySelector('#etaDemoSection #node-graphDiv2-A').classList.add('highlight-path');
+            document.querySelector('#etaDemoSection #node-graphDiv2-C').classList.add('highlight-path');
+            document.querySelector('#etaDemoSection #node-graphDiv2-D').classList.add('highlight-path');
+        });
+        document.getElementById('toggleTrafficBtn')?.addEventListener('click', function() {
+            const edgeABLabel = document.getElementById('label-graphDiv4-AB'); const edgeAB = document.getElementById('edge-graphDiv4-AB');
+            if (etaCurrentTrafficEdgeWeight === 10) {
+                etaCurrentTrafficEdgeWeight = 30; this.innerHTML = '<i class="fas fa-car-side"></i> Simulate Normal Traffic (A to B)';
+                if(edgeABLabel) edgeABLabel.textContent = etaCurrentTrafficEdgeWeight; if(edgeAB) edgeAB.style.backgroundColor = '#f87171';
+            } else {
+                etaCurrentTrafficEdgeWeight = 10; this.innerHTML = '<i class="fas fa-car-side"></i> Simulate High Traffic (A to B)';
+                if(edgeABLabel) edgeABLabel.textContent = etaCurrentTrafficEdgeWeight; if(edgeAB) edgeAB.style.backgroundColor = '#64748b';
+            }
+        });
+        document.getElementById('showMatchedPathBtn')?.addEventListener('click', () => {
+            const matchedPath = document.getElementById('matchedGPSPath'); const matchedPoints = "40,100 90,100 140,100 150,100 150,130 190,100 240,100"; 
+            if(matchedPath) {
+                matchedPath.setAttribute('points', ''); let currentPoints = ""; const pointsArray = matchedPoints.split(' '); let i = 0;
+                function addPoint() {
+                    if (i < pointsArray.length) {
+                        currentPoints += (i > 0 ? " " : "") + pointsArray[i]; matchedPath.setAttribute('points', currentPoints); i++; setTimeout(addPoint, 100); 
+                    }
+                } addPoint();
+            }
+        });
+        function etaDemoRestart(initialStepId = 'etaStep1') {
+            etaCurrentTrafficEdgeWeight = 10; 
+            const findPathBtn = document.getElementById('findPathBtn'); if(findPathBtn) findPathBtn.disabled = false;
+            const toggleTrafficBtn = document.getElementById('toggleTrafficBtn');
+            if(toggleTrafficBtn) toggleTrafficBtn.innerHTML = '<i class="fas fa-car-side"></i> Simulate High Traffic (A to B)';
+            etaDemoShowStep(initialStepId);
+        }
+        function etaDemoInit() { etaDemoRestart('etaStep1'); }
+
+        // --- Hub Initialization ---
+        document.getElementById('tileLaunchInteractiveHub').addEventListener('click', () => showOuterPage('interactiveSystemDesignHubContent'));
+        document.getElementById('tilePassword').addEventListener('click', () => showHubPage('passwordDemoSection'));
+        document.getElementById('tileETA').addEventListener('click', () => showHubPage('etaDemoSection'));
+        // Event listener for the new NVIDIA tile (currently does nothing on click)
+        document.getElementById('tileNvidiaDsPrep')?.addEventListener('click', () => {
+            // Placeholder: alert or navigate to a future section
+            // For now, it's just a visual tile.
+            const msgContainer = document.getElementById('tileNvidiaDsPrep');
+            let tempMsg = msgContainer.querySelector('.temp-msg-tile');
+            if (!tempMsg) {
+                tempMsg = document.createElement('p');
+                tempMsg.textContent = "Content coming soon!";
+                tempMsg.className = "text-sm text-gray-500 mt-2 temp-msg-tile";
+                msgContainer.appendChild(tempMsg);
+                setTimeout(() => tempMsg.remove(), 3000);
+            }
+        });
+        
+        showOuterPage('learnSystemDesignPage'); // Show "Learn System Design" page initially
     </script>
 </body>
 </html>
